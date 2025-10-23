@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Tycoon - Time Traveler Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏦 BANK TYCOON 🏦</h1>
+            <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
+        </header>
+
+        <div class="game-grid">
+            <!-- Bank Status Panel -->
+            <div class="panel status-panel">
+                <h2>🏛️ Bank Status</h2>
+                <div class="stat-row">
+                    <span>Total Assets:</span>
+                    <span id="totalAssets">$1,000</span>
+                </div>
+                <div class="stat-row">
+                    <span>Cash Reserves:</span>
+                    <span id="cashReserves">$1,000</span>
+                </div>
+                <div class="stat-row">
+                    <span>Invested Funds:</span>
+                    <span id="investedFunds">$0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Customer Deposits:</span>
+                    <span id="customerDeposits">$0</span>
+                </div>
+                <div class="stat-row reserve-ratio">
+                    <span>Reserve Ratio:</span>
+                    <span id="reserveRatio">100%</span>
+                </div>
+                <div class="stat-row">
+                    <span>Security Level:</span>
+                    <span id="securityLevel">Basic</span>
+                </div>
+            </div>
+
+            <!-- Customers Panel -->
+            <div class="panel customers-panel">
+                <h2>👥 Customers</h2>
+                <div id="customerQueue">
+                    <p class="hint">Customers will arrive seeking deposits and withdrawals...</p>
+                </div>
+                <div class="customer-stats">
+                    <div>Active Accounts: <span id="activeAccounts">0</span></div>
+                    <div>Customer Trust: <span id="customerTrust">100%</span></div>
+                </div>
+            </div>
+
+            <!-- Investments Panel -->
+            <div class="panel investments-panel">
+                <h2>📈 Investments</h2>
+                <div class="investment-options">
+                    <div class="investment-option">
+                        <h3>Safe Bonds</h3>
+                        <p>Returns: 3% per year</p>
+                        <p>Risk: Very Low</p>
+                        <input type="number" id="bondsAmount" placeholder="Amount" min="0" step="100">
+                        <button onclick="game.invest('bonds')">Invest</button>
+                    </div>
+                    <div class="investment-option">
+                        <h3>Stocks</h3>
+                        <p>Returns: 8% per year</p>
+                        <p>Risk: Medium</p>
+                        <input type="number" id="stocksAmount" placeholder="Amount" min="0" step="100">
+                        <button onclick="game.invest('stocks')">Invest</button>
+                    </div>
+                    <div class="investment-option">
+                        <h3>Speculative</h3>
+                        <p>Returns: 15% per year</p>
+                        <p>Risk: High</p>
+                        <input type="number" id="speculativeAmount" placeholder="Amount" min="0" step="100">
+                        <button onclick="game.invest('speculative')">Invest</button>
+                    </div>
+                </div>
+                <div class="portfolio">
+                    <h3>Current Portfolio</h3>
+                    <div id="portfolioDisplay">No investments yet</div>
+                </div>
+            </div>
+
+            <!-- Technology Research Panel -->
+            <div class="panel tech-panel">
+                <h2>🔬 Technology Research</h2>
+                <div class="tech-tree">
+                    <div class="tech-category">
+                        <h3>Security Technologies</h3>
+                        <div id="securityTech"></div>
+                    </div>
+                    <div class="tech-category">
+                        <h3>Profit Enhancement</h3>
+                        <div id="profitTech"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events/Log Panel -->
+            <div class="panel events-panel">
+                <h2>📰 Events & News</h2>
+                <div id="eventLog">
+                    <div class="event">Welcome to Bank Tycoon! Start accepting customer deposits and investing wisely.</div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="panel controls-panel">
+                <h2>⏱️ Game Controls</h2>
+                <div class="time-controls">
+                    <button onclick="game.advanceTime()">Advance 1 Month</button>
+                    <button onclick="game.toggleAutoPause()" id="autoBtn">Auto: OFF</button>
+                </div>
+                <div class="game-date">
+                    <strong>Date:</strong> <span id="gameDate">January 1920</span>
+                </div>
+                <div class="game-stats">
+                    <div>Years in Business: <span id="yearsInBusiness">0</span></div>
+                    <div>Total Profit: <span id="totalProfit">$0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

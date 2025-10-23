@@ -1,0 +1,433 @@
+/* Bank Tycoon - Retro Style */
+
+:root {
+    --primary-bg: #1a1a1a;
+    --secondary-bg: #2a2a2a;
+    --panel-bg: #3a3a3a;
+    --border-color: #4a4a4a;
+    --text-primary: #00ff00;
+    --text-secondary: #00cc00;
+    --text-danger: #ff4444;
+    --text-warning: #ffaa00;
+    --text-info: #44aaff;
+    --text-success: #44ff44;
+    --btn-bg: #2a4a2a;
+    --btn-hover: #3a6a3a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: var(--primary-bg);
+    color: var(--text-primary);
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    border: 3px double var(--text-primary);
+    padding: 20px;
+    background: var(--secondary-bg);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    text-shadow: 0 0 10px var(--text-primary);
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px var(--text-primary); }
+    to { text-shadow: 0 0 20px var(--text-primary), 0 0 30px var(--text-secondary); }
+}
+
+.era-display {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    color: var(--text-warning);
+    font-weight: bold;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 2px solid var(--text-primary);
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.panel h2 {
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--text-primary);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.panel h3 {
+    color: var(--text-secondary);
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+/* Status Panel */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row span:first-child {
+    color: var(--text-secondary);
+}
+
+.stat-row span:last-child {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+/* Customers Panel */
+.customer-request {
+    background: var(--secondary-bg);
+    border: 1px solid var(--text-info);
+    padding: 15px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.customer-info {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.customer-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.customer-actions button {
+    flex: 1;
+}
+
+.approve-btn {
+    background: #2a4a2a;
+    color: var(--text-success);
+    border: 1px solid var(--text-success);
+}
+
+.approve-btn:hover {
+    background: #3a6a3a;
+    box-shadow: 0 0 10px rgba(68, 255, 68, 0.5);
+}
+
+.deny-btn {
+    background: #4a2a2a;
+    color: var(--text-danger);
+    border: 1px solid var(--text-danger);
+}
+
+.deny-btn:hover {
+    background: #6a3a3a;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.customer-stats {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.customer-stats div {
+    padding: 5px 0;
+    color: var(--text-secondary);
+}
+
+.customer-stats span {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.hint {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Investments Panel */
+.investment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.investment-option {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+}
+
+.investment-option h3 {
+    margin-top: 0;
+}
+
+.investment-option p {
+    color: var(--text-secondary);
+    margin: 5px 0;
+}
+
+.investment-option input {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    background: var(--primary-bg);
+    border: 1px solid var(--text-primary);
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+}
+
+.portfolio {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+#portfolioDisplay {
+    color: var(--text-secondary);
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    margin-top: 10px;
+}
+
+/* Technology Panel */
+.tech-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tech-category h3 {
+    margin-top: 0;
+}
+
+.tech-item {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.tech-name {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.tech-level, .tech-cost {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 3px 0;
+}
+
+.tech-item button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.tech-item button.can-afford {
+    background: var(--btn-bg);
+    border-color: var(--text-success);
+    color: var(--text-success);
+}
+
+.tech-item button.can-afford:hover {
+    background: var(--btn-hover);
+    box-shadow: 0 0 10px rgba(68, 255, 68, 0.5);
+}
+
+/* Events Panel */
+#eventLog {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.event {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--text-info);
+    background: var(--secondary-bg);
+    font-size: 0.9rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.event-success {
+    border-left-color: var(--text-success);
+    color: var(--text-success);
+}
+
+.event-danger {
+    border-left-color: var(--text-danger);
+    color: var(--text-danger);
+    font-weight: bold;
+}
+
+.event-warning {
+    border-left-color: var(--text-warning);
+    color: var(--text-warning);
+}
+
+.event-info {
+    border-left-color: var(--text-info);
+    color: var(--text-info);
+}
+
+/* Controls Panel */
+.time-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.time-controls button {
+    flex: 1;
+}
+
+.game-date {
+    background: var(--secondary-bg);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.game-date strong {
+    color: var(--text-secondary);
+}
+
+.game-date span {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.game-stats div {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.game-stats div:last-child {
+    border-bottom: none;
+}
+
+.game-stats span {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+/* Buttons */
+button {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--text-primary);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+    background: var(--btn-bg);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--border-color);
+}
+
+button.active {
+    background: var(--btn-hover);
+    border-color: var(--text-success);
+    color: var(--text-success);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--primary-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--text-primary);
+    border: 1px solid var(--primary-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .game-grid {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .time-controls {
+        flex-direction: column;
+    }
+}
