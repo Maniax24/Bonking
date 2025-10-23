@@ -57,6 +57,191 @@ class BankGame {
         this.updateDisplay();
         this.renderTechTree();
         this.scheduleCustomer();
+        this.checkAutoSave();
+    }
+
+    // Save/Load System
+    saveGame() {
+        const saveData = {
+            version: '1.0',
+            timestamp: Date.now(),
+            cashReserves: this.cashReserves,
+            customerDeposits: this.customerDeposits,
+            investments: {...this.investments},
+            totalProfit: this.totalProfit,
+            activeAccounts: this.activeAccounts,
+            customerTrust: this.customerTrust,
+            currentYear: this.currentYear,
+            currentMonth: this.currentMonth,
+            technologies: {
+                security: this.technologies.security.map(t => ({ id: t.id, level: t.level })),
+                profit: this.technologies.profit.map(t => ({ id: t.id, level: t.level }))
+            },
+            lastThiefAttempt: this.lastThiefAttempt
+        };
+
+        try {
+            localStorage.setItem('bankTycoonSave', JSON.stringify(saveData));
+            this.addEvent('💾 Game saved successfully!', 'success');
+            this.updateSaveInfo();
+            return true;
+        } catch (error) {
+            this.addEvent('Failed to save game: ' + error.message, 'danger');
+            return false;
+        }
+    }
+
+    loadGame() {
+        try {
+            const saveData = localStorage.getItem('bankTycoonSave');
+            if (!saveData) {
+                this.addEvent('No saved game found', 'warning');
+                return false;
+            }
+
+            const data = JSON.parse(saveData);
+
+            // Restore financial state
+            this.cashReserves = data.cashReserves;
+            this.customerDeposits = data.customerDeposits;
+            this.investments = {...data.investments};
+            this.totalProfit = data.totalProfit;
+
+            // Restore customer state
+            this.activeAccounts = data.activeAccounts;
+            this.customerTrust = data.customerTrust;
+
+            // Restore time
+            this.currentYear = data.currentYear;
+            this.currentMonth = data.currentMonth;
+            this.era = this.getEra();
+
+            // Restore technology levels
+            data.technologies.security.forEach(saved => {
+                const tech = this.technologies.security.find(t => t.id === saved.id);
+                if (tech) tech.level = saved.level;
+            });
+            data.technologies.profit.forEach(saved => {
+                const tech = this.technologies.profit.find(t => t.id === saved.id);
+                if (tech) tech.level = saved.level;
+            });
+
+            this.lastThiefAttempt = data.lastThiefAttempt || 0;
+
+            // Recalculate derived values
+            this.securityLevel = this.calculateSecurityLevel();
+            this.profitMultiplier = this.calculateProfitMultiplier();
+
+            // Update display
+            this.renderTechTree();
+            this.updateDisplay();
+            this.addEvent('💾 Game loaded successfully!', 'success');
+            this.updateSaveInfo();
+            return true;
+        } catch (error) {
+            this.addEvent('Failed to load game: ' + error.message, 'danger');
+            return false;
+        }
+    }
+
+    deleteSave() {
+        if (confirm('Are you sure you want to delete your saved game? This cannot be undone!')) {
+            localStorage.removeItem('bankTycoonSave');
+            this.addEvent('💾 Save deleted', 'warning');
+            this.updateSaveInfo();
+        }
+    }
+
+    exportSave() {
+        const saveData = localStorage.getItem('bankTycoonSave');
+        if (!saveData) {
+            this.addEvent('No saved game to export', 'warning');
+            return;
+        }
+
+        // Create a downloadable file
+        const blob = new Blob([saveData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bank-tycoon-save-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.addEvent('💾 Save exported successfully!', 'success');
+    }
+
+    importSave() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const saveData = event.target.result;
+                    // Validate it's valid JSON
+                    JSON.parse(saveData);
+
+                    localStorage.setItem('bankTycoonSave', saveData);
+                    this.loadGame();
+                    this.addEvent('💾 Save imported and loaded!', 'success');
+                } catch (error) {
+                    this.addEvent('Failed to import save: Invalid file', 'danger');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        input.click();
+    }
+
+    newGame() {
+        if (confirm('Start a new game? Your current progress will be lost unless saved!')) {
+            localStorage.removeItem('bankTycoonSave');
+            location.reload();
+        }
+    }
+
+    checkAutoSave() {
+        const saveData = localStorage.getItem('bankTycoonSave');
+        if (saveData) {
+            const data = JSON.parse(saveData);
+            const saveDate = new Date(data.timestamp);
+            const hasSave = confirm(
+                `Found a saved game from ${saveDate.toLocaleString()}\n` +
+                `Year: ${data.currentYear}, Cash: $${Math.floor(data.cashReserves)}\n\n` +
+                `Load this save?`
+            );
+
+            if (hasSave) {
+                this.loadGame();
+            }
+        }
+        this.updateSaveInfo();
+    }
+
+    updateSaveInfo() {
+        const saveInfo = document.getElementById('saveInfo');
+        if (!saveInfo) return;
+
+        const saveData = localStorage.getItem('bankTycoonSave');
+        if (saveData) {
+            const data = JSON.parse(saveData);
+            const saveDate = new Date(data.timestamp);
+            saveInfo.innerHTML = `
+                <div class="save-exists">
+                    💾 Last Save: ${saveDate.toLocaleDateString()} ${saveDate.toLocaleTimeString()}<br>
+                    Year: ${data.currentYear} | Cash: $${Math.floor(data.cashReserves)}
+                </div>
+            `;
+        } else {
+            saveInfo.innerHTML = '<div class="no-save">No saved game</div>';
+        }
     }
 
     // Era System
@@ -79,6 +264,8 @@ class BankGame {
             this.currentYear++;
             this.era = this.getEra();
             this.renderTechTree(); // Update available tech
+            // Auto-save every year
+            this.saveGame();
         }
 
         // Process monthly events

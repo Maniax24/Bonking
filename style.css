@@ -417,6 +417,120 @@ button.active {
     background: var(--text-secondary);
 }
 
+/* Save/Load Panel */
+.save-panel {
+    background: var(--panel-bg);
+}
+
+.save-info {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    margin-bottom: 15px;
+    min-height: 60px;
+    text-align: center;
+}
+
+.save-exists {
+    color: var(--text-success);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.no-save {
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 10px;
+}
+
+.save-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.save-controls button {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.95rem;
+}
+
+.save-btn {
+    background: #2a4a2a;
+    border-color: var(--text-success);
+    color: var(--text-success);
+}
+
+.save-btn:hover {
+    background: #3a6a3a;
+    box-shadow: 0 0 10px rgba(68, 255, 68, 0.5);
+}
+
+.load-btn {
+    background: #2a2a4a;
+    border-color: var(--text-info);
+    color: var(--text-info);
+}
+
+.load-btn:hover {
+    background: #3a3a6a;
+    box-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
+}
+
+.export-btn {
+    background: #4a3a2a;
+    border-color: var(--text-warning);
+    color: var(--text-warning);
+}
+
+.export-btn:hover {
+    background: #6a5a3a;
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.import-btn {
+    background: #3a2a4a;
+    border-color: #aa44ff;
+    color: #aa44ff;
+}
+
+.import-btn:hover {
+    background: #5a3a6a;
+    box-shadow: 0 0 10px rgba(170, 68, 255, 0.5);
+}
+
+.new-game-btn {
+    background: #2a3a4a;
+    border-color: var(--text-info);
+    color: var(--text-info);
+}
+
+.new-game-btn:hover {
+    background: #3a5a6a;
+    box-shadow: 0 0 10px rgba(68, 170, 255, 0.5);
+}
+
+.delete-btn {
+    background: #4a2a2a;
+    border-color: var(--text-danger);
+    color: var(--text-danger);
+}
+
+.delete-btn:hover {
+    background: #6a3a3a;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.auto-save-notice {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+    padding: 10px;
+    margin-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .game-grid {
@@ -428,6 +542,10 @@ button.active {
     }
 
     .time-controls {
+        flex-direction: column;
+    }
+
+    .save-controls {
         flex-direction: column;
     }
 }
