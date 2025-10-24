@@ -1401,6 +1401,230 @@ button.active {
     transform: translateX(5px);
 }
 
+/* New Features Toggle Buttons */
+.competitors-toggle,
+.economy-toggle,
+.branches-toggle,
+.products-toggle {
+    position: fixed;
+    right: 20px;
+    z-index: 1000;
+}
+
+.competitors-toggle {
+    bottom: 80px;
+}
+
+.economy-toggle {
+    bottom: 140px;
+}
+
+.branches-toggle {
+    bottom: 200px;
+}
+
+.products-toggle {
+    bottom: 260px;
+}
+
+.competitors-toggle button,
+.economy-toggle button,
+.branches-toggle button,
+.products-toggle button {
+    background: var(--btn-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--text-primary);
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.competitors-toggle button:hover,
+.economy-toggle button:hover,
+.branches-toggle button:hover,
+.products-toggle button:hover {
+    background: var(--btn-hover);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.competitors-toggle button.active,
+.economy-toggle button.active,
+.branches-toggle button.active,
+.products-toggle button.active {
+    background: var(--text-primary);
+    color: var(--primary-bg);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.7);
+}
+
+/* Competitors Panel */
+.competitors-panel,
+.economy-panel,
+.branches-panel,
+.products-panel {
+    grid-column: 1 / -1;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.panel-hint {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.market-share-display {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    text-align: center;
+}
+
+.market-share-display h3 {
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.competitors-table,
+.branches-table,
+.products-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.competitors-table th,
+.branches-table th,
+.products-table th {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    padding: 10px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    font-weight: bold;
+}
+
+.competitors-table td,
+.branches-table td,
+.products-table td {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.competitors-table tbody tr:hover,
+.branches-table tbody tr:hover,
+.products-table tbody tr:hover {
+    background: var(--secondary-bg);
+}
+
+.competitors-table tr.market-leader {
+    background: rgba(0, 255, 0, 0.1);
+    font-weight: bold;
+}
+
+.competitors-table tr.market-leader td {
+    color: var(--text-primary);
+}
+
+/* Economy Panel */
+.economy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.economy-indicator {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.economy-indicator:hover {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+}
+
+.indicator-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.indicator-value {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 10px 0;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.indicator-hint {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 8px;
+}
+
+/* Branches Panel */
+.branch-actions {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    text-align: center;
+}
+
+.branch-actions .action-btn {
+    background: var(--btn-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--text-primary);
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.branch-actions .action-btn:hover:not(:disabled) {
+    background: var(--btn-hover);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+.branch-actions .action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.branch-actions .hint {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+/* Products Panel */
+.products-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+}
+
+.products-info p {
+    color: var(--text-secondary);
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .game-grid {

@@ -11,7 +11,7 @@
         <header>
             <h1>🏦 BANK TYCOON 🏦</h1>
             <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
-            <div class="version-info">v2.0.0 | Updated: December 2024</div>
+            <div class="version-info">v3.0.0 | Updated: December 2024</div>
         </header>
 
         <div class="game-grid">
@@ -423,6 +423,119 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Competitor Banks Panel -->
+            <div class="panel competitors-panel" id="competitorsPanel" style="display: none;">
+                <h2>🏆 Market Competition</h2>
+                <p class="panel-hint">Track your position against competitor banks in the market</p>
+
+                <div class="market-share-display">
+                    <h3>Your Market Share: <span id="yourMarketShare" style="color: #44ff44;">100%</span></h3>
+                </div>
+
+                <table class="competitors-table">
+                    <thead>
+                        <tr>
+                            <th>Bank Name</th>
+                            <th>Deposits</th>
+                            <th>Deposit Rate</th>
+                            <th>Loan Rate</th>
+                            <th>Market Share</th>
+                        </tr>
+                    </thead>
+                    <tbody id="competitorsTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Economic Indicators Panel -->
+            <div class="panel economy-panel" id="economyPanel" style="display: none;">
+                <h2>📈 Economic Indicators</h2>
+                <p class="panel-hint">Monitor the economy to make informed decisions</p>
+
+                <div class="economy-grid">
+                    <div class="economy-indicator">
+                        <div class="indicator-label">📊 Inflation Rate</div>
+                        <div class="indicator-value" id="inflationRate">2.0%</div>
+                        <div class="indicator-hint">Higher inflation reduces deposit value</div>
+                    </div>
+                    <div class="economy-indicator">
+                        <div class="indicator-label">👷 Unemployment</div>
+                        <div class="indicator-value" id="unemploymentRate">5.0%</div>
+                        <div class="indicator-hint">Higher unemployment increases defaults</div>
+                    </div>
+                    <div class="economy-indicator">
+                        <div class="indicator-label">💹 GDP Growth</div>
+                        <div class="indicator-value" id="gdpGrowth">3.0%</div>
+                        <div class="indicator-hint">Higher growth brings more customers</div>
+                    </div>
+                    <div class="economy-indicator">
+                        <div class="indicator-label">📈 Stock Market</div>
+                        <div class="indicator-value" id="stockMarketIndex">1000</div>
+                        <div class="indicator-hint">Index affects investment returns</div>
+                    </div>
+                    <div class="economy-indicator">
+                        <div class="indicator-label">😊 Consumer Confidence</div>
+                        <div class="indicator-value" id="consumerConfidence">70</div>
+                        <div class="indicator-hint">Higher confidence means more deposits</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch Expansion Panel -->
+            <div class="panel branches-panel" id="branchesPanel" style="display: none;">
+                <h2>🏢 Branch Management</h2>
+                <p class="panel-hint">Expand your banking empire with new branches</p>
+
+                <table class="branches-table">
+                    <thead>
+                        <tr>
+                            <th>Branch Name</th>
+                            <th>Location</th>
+                            <th>Customers</th>
+                            <th>Deposits</th>
+                            <th>Staff</th>
+                            <th>Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="branchesTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+
+                <div class="branch-actions">
+                    <button class="action-btn" onclick="game.openBranchExpansion()" disabled>
+                        🏗️ Open New Branch ($50,000)
+                    </button>
+                    <div class="hint">Coming soon: Expand to new cities!</div>
+                </div>
+            </div>
+
+            <!-- Financial Products Panel -->
+            <div class="panel products-panel" id="productsPanel" style="display: none;">
+                <h2>💳 Financial Products</h2>
+                <p class="panel-hint">Diversify revenue with various banking products</p>
+
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Customers</th>
+                            <th>Profit Margin</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+
+                <div class="products-info">
+                    <p>✨ Products unlock automatically as you progress through the eras</p>
+                    <p>🎯 Customers are automatically assigned to products based on their segment</p>
+                </div>
+            </div>
         </div>
 
         <!-- Automation Settings Toggle Button -->
@@ -433,6 +546,26 @@
         <!-- Statistics Toggle Button -->
         <div class="statistics-toggle">
             <button id="toggleStatsBtn" onclick="game.toggleStatistics()">📊 Statistics</button>
+        </div>
+
+        <!-- Market Competition Toggle Button -->
+        <div class="competitors-toggle">
+            <button id="toggleCompetitorsBtn" onclick="game.toggleCompetitors()">🏆 Competition</button>
+        </div>
+
+        <!-- Economy Toggle Button -->
+        <div class="economy-toggle">
+            <button id="toggleEconomyBtn" onclick="game.toggleEconomy()">📈 Economy</button>
+        </div>
+
+        <!-- Branches Toggle Button -->
+        <div class="branches-toggle">
+            <button id="toggleBranchesBtn" onclick="game.toggleBranches()">🏢 Branches</button>
+        </div>
+
+        <!-- Products Toggle Button -->
+        <div class="products-toggle">
+            <button id="toggleProductsBtn" onclick="game.toggleProducts()">💳 Products</button>
         </div>
     </div>
 

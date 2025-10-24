@@ -153,6 +153,10 @@ class BankGame {
             }
         };
         this.showStatistics = false;
+        this.showCompetitors = false;
+        this.showEconomy = false;
+        this.showBranches = false;
+        this.showProducts = false;
 
         // Random Events System
         this.activeEvent = null; // Currently displayed event
@@ -160,31 +164,278 @@ class BankGame {
         this.lastEventMonth = 0; // Prevent event spam
         this.eventEffects = []; // Active temporary effects
 
-        // Objectives System
+        // Competitor Banks
+        this.competitors = [];
+        this.marketShare = 100; // Your % of market
+        this.initializeCompetitors();
+
+        // Economic Indicators
+        this.economy = {
+            inflation: 0.02, // 2% base
+            unemployment: 0.05, // 5% base
+            gdpGrowth: 0.03, // 3% base
+            stockMarketIndex: 1000, // Base value
+            consumerConfidence: 70 // 0-100 scale
+        };
+
+        // Branch Expansion
+        this.branches = [
+            {
+                id: 'main',
+                name: 'Main Branch',
+                location: 'Downtown',
+                deposits: 0,
+                customers: 0,
+                staff: { tellers: 0, guards: 0 },
+                level: 1,
+                unlocked: true
+            }
+        ];
+        this.activeBranch = 'main'; // Currently viewing branch
+
+        // Financial Products
+        this.products = {
+            savings: { unlocked: true, minYear: 1920, profitMargin: 0.01, customers: 0 },
+            checking: { unlocked: false, minYear: 1950, profitMargin: 0.005, customers: 0 },
+            creditCards: { unlocked: false, minYear: 1958, profitMargin: 0.15, customers: 0 },
+            autoLoans: { unlocked: false, minYear: 1950, profitMargin: 0.03, customers: 0 },
+            mortgages: { unlocked: false, minYear: 1930, profitMargin: 0.025, customers: 0 },
+            moneyMarket: { unlocked: false, minYear: 1971, profitMargin: 0.02, customers: 0 },
+            mutualFunds: { unlocked: false, minYear: 1990, profitMargin: 0.08, customers: 0 },
+            onlineBanking: { unlocked: false, minYear: 1995, profitMargin: 0.01, customers: 0 },
+            mobileBanking: { unlocked: false, minYear: 2007, profitMargin: 0.015, customers: 0 },
+            cryptocurrency: { unlocked: false, minYear: 2015, profitMargin: 0.20, customers: 0 }
+        };
+
+        // Objectives & Achievements System
         this.objectives = [
-            { id: 'cash_5k', name: 'Reach $5,000 cash', target: 5000, type: 'cash', completed: false, reward: 500 },
-            { id: 'cash_10k', name: 'Reach $10,000 cash', target: 10000, type: 'cash', completed: false, reward: 1000 },
-            { id: 'cash_50k', name: 'Reach $50,000 cash', target: 50000, type: 'cash', completed: false, reward: 5000 },
-            { id: 'year_1930', name: 'Survive until 1930', target: 1930, type: 'year', completed: false, reward: 2000 },
-            { id: 'year_1950', name: 'Survive until 1950', target: 1950, type: 'year', completed: false, reward: 5000 },
-            { id: 'year_1970', name: 'Survive until 1970', target: 1970, type: 'year', completed: false, reward: 10000 },
-            { id: 'profit_10k', name: 'Earn $10,000 total profit', target: 10000, type: 'profit', completed: false, reward: 2000 },
-            { id: 'profit_50k', name: 'Earn $50,000 total profit', target: 50000, type: 'profit', completed: false, reward: 10000 },
-            { id: 'accounts_50', name: 'Reach 50 active accounts', target: 50, type: 'accounts', completed: false, reward: 1000 },
-            { id: 'accounts_100', name: 'Reach 100 active accounts', target: 100, type: 'accounts', completed: false, reward: 3000 },
-            { id: 'trust_100', name: 'Maintain 100% trust for 1 year', target: 12, type: 'trust', completed: false, reward: 2000, counter: 0 },
-            { id: 'security_max', name: 'Max out all security tech', target: 1, type: 'security', completed: false, reward: 5000 },
-            { id: 'profit_max', name: 'Max out all profit tech', target: 1, type: 'profit_tech', completed: false, reward: 5000 }
+            // Financial Milestones
+            { id: 'cash_5k', name: '💰 First Milestone', desc: 'Reach $5,000 cash', target: 5000, type: 'cash', completed: false, reward: 500, hidden: false },
+            { id: 'cash_10k', name: '💰 Growing Business', desc: 'Reach $10,000 cash', target: 10000, type: 'cash', completed: false, reward: 1000, hidden: false },
+            { id: 'cash_50k', name: '💰 Major Player', desc: 'Reach $50,000 cash', target: 50000, type: 'cash', completed: false, reward: 5000, hidden: false },
+            { id: 'cash_250k', name: '💰 Banking Empire', desc: 'Reach $250,000 cash', target: 250000, type: 'cash', completed: false, reward: 25000, hidden: false },
+
+            // Time Milestones
+            { id: 'year_1930', name: '⏰ Survived the Twenties', desc: 'Reach 1930', target: 1930, type: 'year', completed: false, reward: 2000, hidden: false },
+            { id: 'year_1950', name: '⏰ Post-War Prosperity', desc: 'Reach 1950', target: 1950, type: 'year', completed: false, reward: 5000, hidden: false },
+            { id: 'year_1970', name: '⏰ Modern Banking', desc: 'Reach 1970', target: 1970, type: 'year', completed: false, reward: 10000, hidden: false },
+            { id: 'year_2000', name: '⏰ New Millennium', desc: 'Reach 2000', target: 2000, type: 'year', completed: false, reward: 20000, hidden: false },
+
+            // Profit Achievements
+            { id: 'profit_10k', name: '📈 Profitable', desc: 'Earn $10,000 total profit', target: 10000, type: 'profit', completed: false, reward: 2000, hidden: false },
+            { id: 'profit_50k', name: '📈 Profit Machine', desc: 'Earn $50,000 total profit', target: 50000, type: 'profit', completed: false, reward: 10000, hidden: false },
+            { id: 'profit_250k', name: '📈 Wealth Generator', desc: 'Earn $250,000 total profit', target: 250000, type: 'profit', completed: false, reward: 25000, hidden: false },
+
+            // Customer Achievements
+            { id: 'accounts_50', name: '👥 Growing Clientele', desc: 'Reach 50 active accounts', target: 50, type: 'accounts', completed: false, reward: 1000, hidden: false },
+            { id: 'accounts_100', name: '👥 Established Bank', desc: 'Reach 100 active accounts', target: 100, type: 'accounts', completed: false, reward: 3000, hidden: false },
+            { id: 'accounts_500', name: '👥 Customer Magnet', desc: 'Reach 500 active accounts', target: 500, type: 'accounts', completed: false, reward: 15000, hidden: false },
+
+            // Tech Achievements
+            { id: 'security_max', name: '🔒 Fort Knox', desc: 'Max out all security tech', target: 1, type: 'security', completed: false, reward: 5000, hidden: false },
+            { id: 'profit_max', name: '💹 Optimization Master', desc: 'Max out all profit tech', target: 1, type: 'profit_tech', completed: false, reward: 5000, hidden: false },
+            { id: 'all_tech_max', name: '🔬 Tech Pioneer', desc: 'Max out ALL technologies', target: 1, type: 'all_tech', completed: false, reward: 20000, hidden: false },
+
+            // Challenge Achievements (Hidden)
+            { id: 'no_defaults', name: '⭐ Perfect Record', desc: 'Issue 50 loans with zero defaults', target: 50, type: 'no_defaults', completed: false, reward: 10000, hidden: true, counter: 0 },
+            { id: 'trust_perfect', name: '⭐ Trusted Institution', desc: 'Maintain 100% trust for 1 year', target: 12, type: 'trust', completed: false, reward: 5000, hidden: true, counter: 0 },
+            { id: 'market_leader', name: '⭐ Market Domination', desc: 'Achieve 50%+ market share', target: 50, type: 'market_share', completed: false, reward: 15000, hidden: true },
+            { id: 'crisis_survivor', name: '⭐ Crisis Manager', desc: 'Survive 5 major events successfully', target: 5, type: 'events', completed: false, reward: 10000, hidden: true, counter: 0 },
+            { id: 'vip_collector', name: '⭐ VIP Magnet', desc: 'Have 20+ VIP customers', target: 20, type: 'vip_customers', completed: false, reward: 8000, hidden: true },
+            { id: 'expansion_master', name: '⭐ Branch Network', desc: 'Open 5 branches', target: 5, type: 'branches', completed: false, reward: 20000, hidden: true },
+            { id: 'product_portfolio', name: '⭐ Full Service Bank', desc: 'Unlock all financial products', target: 10, type: 'products', completed: false, reward: 15000, hidden: true },
+            { id: 'rate_master', name: '⭐ Rate Strategist', desc: 'Beat market rates for 12 months straight', target: 12, type: 'competitive_rates', completed: false, reward: 5000, hidden: true, counter: 0 },
+            { id: 'automation_king', name: '⭐ Hands-Off Manager', desc: 'Enable all automation options', target: 1, type: 'automation', completed: false, reward: 10000, hidden: true }
         ];
 
         this.init();
     }
 
     init() {
+        this.unlockProducts(); // Check for new products
         this.updateDisplay();
         this.renderTechTree();
         this.checkAutoSave();
         this.startAutoAdvance(); // Start time progression automatically
+    }
+
+    // Competitor Banks System
+    initializeCompetitors() {
+        const names = [
+            'First National Bank', 'Citizens Bank', 'Metro Bank', 'Trust & Savings',
+            'Community Bank', 'United Bank', 'Federal Reserve Bank'
+        ];
+
+        // Start with 2 competitors
+        for (let i = 0; i < 2; i++) {
+            this.competitors.push({
+                name: names[i],
+                deposits: Math.floor(Math.random() * 3000 + 2000),
+                depositRate: 0.02 + (Math.random() - 0.5) * 0.005,
+                loanRate: 0.06 + (Math.random() - 0.5) * 0.01,
+                customers: Math.floor(Math.random() * 30 + 20),
+                trust: Math.floor(Math.random() * 20 + 70)
+            });
+        }
+        this.calculateMarketShare();
+    }
+
+    calculateMarketShare() {
+        const totalMarket = this.customerDeposits + this.competitors.reduce((sum, comp) => sum + comp.deposits, 0);
+        if (totalMarket > 0) {
+            this.marketShare = (this.customerDeposits / totalMarket) * 100;
+        } else {
+            this.marketShare = 100;
+        }
+    }
+
+    processCompetitors() {
+        // Competitors adjust their rates based on market
+        this.competitors.forEach(comp => {
+            // Competitors gradually adjust towards market rates with some variation
+            const depositAdjust = (this.marketRates.deposit - comp.depositRate) * 0.1;
+            const loanAdjust = (this.marketRates.loan - comp.loanRate) * 0.1;
+
+            comp.depositRate += depositAdjust + (Math.random() - 0.5) * 0.002;
+            comp.loanRate += loanAdjust + (Math.random() - 0.5) * 0.002;
+
+            // Constrain rates
+            comp.depositRate = Math.max(0.005, Math.min(0.10, comp.depositRate));
+            comp.loanRate = Math.max(0.03, Math.min(0.15, comp.loanRate));
+
+            // Grow/shrink deposits based on rates and economy
+            const growthFactor = 1 + this.economy.gdpGrowth + (Math.random() - 0.5) * 0.02;
+            comp.deposits *= growthFactor;
+            comp.customers = Math.floor(comp.customers * growthFactor);
+
+            // Trust changes slowly
+            comp.trust += (Math.random() - 0.5) * 3;
+            comp.trust = Math.max(50, Math.min(100, comp.trust));
+        });
+
+        this.calculateMarketShare();
+    }
+
+    // Economic Indicators System
+    updateEconomy() {
+        // Update economic indicators monthly
+        const eraEffects = {
+            'roaring20s': { inflation: 0.00, unemployment: -0.02, gdpGrowth: 0.04 },
+            'depression': { inflation: -0.05, unemployment: 0.15, gdpGrowth: -0.08 },
+            'wartime': { inflation: 0.03, unemployment: -0.05, gdpGrowth: 0.06 },
+            'postwar': { inflation: 0.02, unemployment: 0.00, gdpGrowth: 0.05 },
+            'modern': { inflation: 0.04, unemployment: 0.01, gdpGrowth: 0.03 },
+            'digital': { inflation: 0.02, unemployment: 0.00, gdpGrowth: 0.04 },
+            'fintech': { inflation: 0.015, unemployment: -0.01, gdpGrowth: 0.035 },
+            'future': { inflation: 0.01, unemployment: -0.02, gdpGrowth: 0.04 }
+        };
+
+        const era = eraEffects[this.era.id] || { inflation: 0.02, unemployment: 0.05, gdpGrowth: 0.03 };
+
+        // Gradually move towards era-appropriate values with random variation
+        this.economy.inflation += (era.inflation - this.economy.inflation) * 0.05 + (Math.random() - 0.5) * 0.01;
+        this.economy.unemployment += (era.unemployment - this.economy.unemployment) * 0.05 + (Math.random() - 0.5) * 0.005;
+        this.economy.gdpGrowth += (era.gdpGrowth - this.economy.gdpGrowth) * 0.05 + (Math.random() - 0.5) * 0.01;
+
+        // Constrain values
+        this.economy.inflation = Math.max(-0.10, Math.min(0.15, this.economy.inflation));
+        this.economy.unemployment = Math.max(0.02, Math.min(0.25, this.economy.unemployment));
+        this.economy.gdpGrowth = Math.max(-0.10, Math.min(0.10, this.economy.gdpGrowth));
+
+        // Update stock market based on GDP growth
+        this.economy.stockMarketIndex *= (1 + this.economy.gdpGrowth / 12 + (Math.random() - 0.5) * 0.05);
+        this.economy.stockMarketIndex = Math.max(100, this.economy.stockMarketIndex);
+
+        // Consumer confidence affected by unemployment and GDP
+        const confidenceTarget = 70 + this.economy.gdpGrowth * 500 - this.economy.unemployment * 200;
+        this.economy.consumerConfidence += (confidenceTarget - this.economy.consumerConfidence) * 0.1;
+        this.economy.consumerConfidence = Math.max(20, Math.min(100, this.economy.consumerConfidence));
+
+        // Apply economic effects to market rates
+        this.marketRates.deposit += this.economy.inflation * 0.5;
+        this.marketRates.loan += this.economy.inflation * 0.3;
+    }
+
+    // Financial Products System
+    unlockProducts() {
+        let newUnlocks = false;
+        for (let productId in this.products) {
+            const product = this.products[productId];
+            if (!product.unlocked && this.currentYear >= product.minYear) {
+                product.unlocked = true;
+                newUnlocks = true;
+                this.addEvent(`🎉 NEW PRODUCT: ${this.getProductName(productId)} now available!`, 'success');
+            }
+        }
+        return newUnlocks;
+    }
+
+    getProductName(id) {
+        const names = {
+            savings: 'Savings Accounts',
+            checking: 'Checking Accounts',
+            creditCards: 'Credit Cards',
+            autoLoans: 'Auto Loans',
+            mortgages: 'Mortgages',
+            moneyMarket: 'Money Market Accounts',
+            mutualFunds: 'Mutual Funds',
+            onlineBanking: 'Online Banking',
+            mobileBanking: 'Mobile Banking',
+            cryptocurrency: 'Cryptocurrency Services'
+        };
+        return names[id] || id;
+    }
+
+    processProductRevenue() {
+        let totalRevenue = 0;
+        for (let productId in this.products) {
+            const product = this.products[productId];
+            if (product.unlocked && product.customers > 0) {
+                // Each customer generates monthly revenue based on profit margin
+                const revenue = product.customers * product.profitMargin * 100; // Base $100 per customer
+                totalRevenue += revenue;
+                this.totalProfit += revenue;
+            }
+        }
+
+        if (totalRevenue > 0) {
+            this.cashReserves += totalRevenue;
+            this.addEvent(`📦 Product Revenue: +$${Math.floor(totalRevenue)}`, 'success');
+        }
+    }
+
+    assignCustomersToProducts() {
+        // New customers are assigned to products
+        const unlockedProducts = Object.keys(this.products).filter(id => this.products[id].unlocked);
+        if (unlockedProducts.length === 0) return;
+
+        // Distribute some customers to products based on segment
+        const retailCustomers = this.customerSegments.retail.count;
+        const businessCustomers = this.customerSegments.business.count;
+        const vipCustomers = this.customerSegments.vip.count;
+
+        // Clear old assignments
+        for (let id in this.products) {
+            this.products[id].customers = 0;
+        }
+
+        // Retail prefers basic products
+        if (this.products.savings.unlocked) this.products.savings.customers += Math.floor(retailCustomers * 0.8);
+        if (this.products.checking.unlocked) this.products.checking.customers += Math.floor(retailCustomers * 0.6);
+        if (this.products.creditCards.unlocked) this.products.creditCards.customers += Math.floor(retailCustomers * 0.3);
+        if (this.products.mobileBanking.unlocked) this.products.mobileBanking.customers += Math.floor(retailCustomers * 0.4);
+
+        // Business prefers business products
+        if (this.products.checking.unlocked) this.products.checking.customers += Math.floor(businessCustomers * 0.9);
+        if (this.products.autoLoans.unlocked) this.products.autoLoans.customers += Math.floor(businessCustomers * 0.4);
+        if (this.products.mortgages.unlocked) this.products.mortgages.customers += Math.floor(businessCustomers * 0.3);
+        if (this.products.onlineBanking.unlocked) this.products.onlineBanking.customers += Math.floor(businessCustomers * 0.7);
+
+        // VIP uses premium products
+        if (this.products.moneyMarket.unlocked) this.products.moneyMarket.customers += Math.floor(vipCustomers * 0.8);
+        if (this.products.mutualFunds.unlocked) this.products.mutualFunds.customers += Math.floor(vipCustomers * 0.6);
+        if (this.products.cryptocurrency.unlocked) this.products.cryptocurrency.customers += Math.floor(vipCustomers * 0.4);
+        if (this.products.mortgages.unlocked) this.products.mortgages.customers += Math.floor(vipCustomers * 0.5);
     }
 
     // Save/Load System
@@ -415,6 +666,11 @@ class BankGame {
             this.processThiefEvents();
             this.processWages();
             this.updateMarketRates(); // Update competitive rates
+            this.updateEconomy(); // Update economic indicators
+            this.processCompetitors(); // Update competitor banks
+            this.unlockProducts(); // Check for new product unlocks
+            this.assignCustomersToProducts(); // Assign customers to products
+            this.processProductRevenue(); // Generate product income
             this.processRandomEvent(); // Trigger random events
             this.checkObjectives();
         }
@@ -1357,6 +1613,118 @@ class BankGame {
         if (marketLoanDisplay) marketLoanDisplay.textContent = `${(this.marketRates.loan * 100).toFixed(2)}%`;
     }
 
+    // Competitor Banks Display
+    updateCompetitorsDisplay() {
+        const competitorsBody = document.getElementById('competitorsTableBody');
+        if (!competitorsBody) return;
+
+        // Update market share display
+        const marketShareElem = document.getElementById('yourMarketShare');
+        if (marketShareElem) {
+            marketShareElem.textContent = `${this.marketShare.toFixed(1)}%`;
+            // Color code based on market share
+            if (this.marketShare >= 50) {
+                marketShareElem.style.color = '#44ff44'; // Green
+            } else if (this.marketShare >= 30) {
+                marketShareElem.style.color = '#ffaa00'; // Orange
+            } else {
+                marketShareElem.style.color = '#ff4444'; // Red
+            }
+        }
+
+        let html = `
+            <tr class="market-leader">
+                <td>🏦 ${this.bankName || 'Your Bank'}</td>
+                <td>$${Math.floor(this.customerDeposits)}</td>
+                <td>${(this.depositInterestRate * 100).toFixed(2)}%</td>
+                <td>${(this.loanBaseRate * 100).toFixed(2)}%</td>
+                <td>${this.marketShare.toFixed(1)}%</td>
+            </tr>
+        `;
+
+        this.competitors.forEach(comp => {
+            html += `
+                <tr>
+                    <td>🏦 ${comp.name}</td>
+                    <td>$${Math.floor(comp.deposits)}</td>
+                    <td>${(comp.depositRate * 100).toFixed(2)}%</td>
+                    <td>${(comp.loanRate * 100).toFixed(2)}%</td>
+                    <td>${comp.marketShare.toFixed(1)}%</td>
+                </tr>
+            `;
+        });
+
+        competitorsBody.innerHTML = html;
+    }
+
+    // Economic Indicators Display
+    updateEconomyDisplay() {
+        const inflationElem = document.getElementById('inflationRate');
+        const unemploymentElem = document.getElementById('unemploymentRate');
+        const gdpElem = document.getElementById('gdpGrowth');
+        const stockElem = document.getElementById('stockMarketIndex');
+        const confidenceElem = document.getElementById('consumerConfidence');
+
+        if (inflationElem) inflationElem.textContent = `${(this.economy.inflation * 100).toFixed(1)}%`;
+        if (unemploymentElem) unemploymentElem.textContent = `${(this.economy.unemployment * 100).toFixed(1)}%`;
+        if (gdpElem) gdpElem.textContent = `${(this.economy.gdpGrowth * 100).toFixed(1)}%`;
+        if (stockElem) stockElem.textContent = Math.floor(this.economy.stockMarketIndex);
+        if (confidenceElem) confidenceElem.textContent = `${Math.floor(this.economy.consumerConfidence)}`;
+    }
+
+    // Branches Display
+    updateBranchesDisplay() {
+        const branchesBody = document.getElementById('branchesTableBody');
+        if (!branchesBody) return;
+
+        let html = '';
+        this.branches.forEach(branch => {
+            if (!branch.unlocked) return;
+
+            html += `
+                <tr>
+                    <td>${branch.name}</td>
+                    <td>${branch.location}</td>
+                    <td>${branch.customers}</td>
+                    <td>$${Math.floor(branch.deposits)}</td>
+                    <td>👤 ${branch.staff.tellers} | 💂 ${branch.staff.guards}</td>
+                    <td>Level ${branch.level}</td>
+                </tr>
+            `;
+        });
+
+        branchesBody.innerHTML = html;
+    }
+
+    // Financial Products Display
+    updateProductsDisplay() {
+        const productsBody = document.getElementById('productsTableBody');
+        if (!productsBody) return;
+
+        let html = '';
+        for (const [key, product] of Object.entries(this.products)) {
+            if (!product.unlocked) continue;
+
+            const productName = this.getProductName(key);
+            const revenue = product.customers * product.profitMargin * 100; // Monthly revenue estimate
+
+            html += `
+                <tr>
+                    <td>${productName}</td>
+                    <td>${product.customers}</td>
+                    <td>${(product.profitMargin * 100).toFixed(1)}%</td>
+                    <td>$${Math.floor(revenue)}/mo</td>
+                </tr>
+            `;
+        }
+
+        if (html === '') {
+            html = '<tr><td colspan="4" style="text-align: center; font-style: italic;">No products unlocked yet</td></tr>';
+        }
+
+        productsBody.innerHTML = html;
+    }
+
     // Random Events System
     processRandomEvent() {
         // Don't trigger if we have an active event or triggered one recently
@@ -1886,6 +2254,12 @@ class BankGame {
 
         // Update interest rates display
         this.renderInterestRates();
+
+        // Update new features display
+        this.updateCompetitorsDisplay();
+        this.updateEconomyDisplay();
+        this.updateBranchesDisplay();
+        this.updateProductsDisplay();
     }
 
     // Objectives System
@@ -2036,6 +2410,66 @@ class BankGame {
             panel.style.display = 'block';
             btn.classList.add('active');
             this.renderStatistics();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    toggleCompetitors() {
+        this.showCompetitors = !this.showCompetitors;
+        const panel = document.getElementById('competitorsPanel');
+        const btn = document.getElementById('toggleCompetitorsBtn');
+
+        if (this.showCompetitors) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.updateCompetitorsDisplay();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    toggleEconomy() {
+        this.showEconomy = !this.showEconomy;
+        const panel = document.getElementById('economyPanel');
+        const btn = document.getElementById('toggleEconomyBtn');
+
+        if (this.showEconomy) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.updateEconomyDisplay();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    toggleBranches() {
+        this.showBranches = !this.showBranches;
+        const panel = document.getElementById('branchesPanel');
+        const btn = document.getElementById('toggleBranchesBtn');
+
+        if (this.showBranches) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.updateBranchesDisplay();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    toggleProducts() {
+        this.showProducts = !this.showProducts;
+        const panel = document.getElementById('productsPanel');
+        const btn = document.getElementById('toggleProductsBtn');
+
+        if (this.showProducts) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.updateProductsDisplay();
         } else {
             panel.style.display = 'none';
             btn.classList.remove('active');
