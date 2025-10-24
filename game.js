@@ -2683,10 +2683,10 @@ class BankGame {
         }
 
         // Average loan size
-        if (this.totalLoansIssued > 0) {
-            const totalLoanValue = this.activeLoans.reduce((sum, loan) => sum + loan.amount, 0);
+        if (this.totalLoansIssued > 0 && this.loans.length > 0) {
+            const totalLoanValue = this.loans.reduce((sum, loan) => sum + loan.amount, 0);
             this.statistics.analytics.averageLoanSize =
-                Math.floor(totalLoanValue / this.activeLoans.length);
+                Math.floor(totalLoanValue / this.loans.length);
         }
 
         // Loan default rate
