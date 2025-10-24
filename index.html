@@ -11,6 +11,7 @@
         <header>
             <h1>🏦 BANK TYCOON 🏦</h1>
             <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
+            <div class="version-info">v1.2.0 | Updated: December 2024</div>
         </header>
 
         <div class="game-grid">
@@ -40,6 +41,10 @@
                 <div class="stat-row">
                     <span>Security Level:</span>
                     <span id="securityLevel">Basic</span>
+                </div>
+                <div class="stat-row">
+                    <span>Teller Capacity:</span>
+                    <span id="tellerCapacity">0/0</span>
                 </div>
             </div>
 
@@ -143,15 +148,21 @@
             <!-- Controls Panel -->
             <div class="panel controls-panel">
                 <h2>⏱️ Game Controls</h2>
+                <div class="day-progress-container">
+                    <div class="day-progress-label">Day Progress</div>
+                    <div class="day-progress-bar-container">
+                        <div id="dayProgressBar" class="day-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
                 <div class="time-controls">
                     <button onclick="game.toggleAutoPause()" id="autoBtn" class="active">Pause</button>
-                    <button onclick="game.advanceTime()">⏩ Skip Month</button>
+                    <button onclick="game.advanceTime()">⏩ Skip Day</button>
                 </div>
                 <div class="speed-controls">
                     <label>Speed:</label>
-                    <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
-                    <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
-                    <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
+                    <button onclick="game.changeSpeed(30000)" class="speed-btn">Slow (30s)</button>
+                    <button onclick="game.changeSpeed(20000)" class="speed-btn active">Normal (20s)</button>
+                    <button onclick="game.changeSpeed(10000)" class="speed-btn">Fast (10s)</button>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>
@@ -194,7 +205,199 @@
                 <div class="wage-info">
                     <strong>Monthly Wages:</strong> $<span id="totalWages">0</span>
                 </div>
+                <div class="loan-officer-info">
+                    💡 Loan Officers auto-approve low-risk loans
+                </div>
             </div>
+
+            <!-- Automation Settings Panel -->
+            <div class="panel automation-panel" id="automationPanel" style="display: none;">
+                <h2>⚙️ Staff Automation Settings</h2>
+                <p class="automation-hint">Configure what your staff can do automatically. Requires appropriate staff to be hired.</p>
+
+                <div class="automation-sections">
+                    <!-- Teller Automation -->
+                    <div class="automation-section">
+                        <h3>👨‍💼 Teller Automation</h3>
+                        <div class="automation-controls">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoApproveDeposits"
+                                    onchange="game.updateAutomationSetting('tellers', 'autoApproveDeposits', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-approve all deposits</span>
+                            </label>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoApproveWithdrawals"
+                                    onchange="game.updateAutomationSetting('tellers', 'autoApproveWithdrawals', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-approve safe withdrawals</span>
+                            </label>
+
+                            <div class="slider-control">
+                                <label>Max Auto-Withdrawal Amount: <span id="maxWithdrawalDisplay">$200</span></label>
+                                <input type="range" id="maxWithdrawalAmount" min="0" max="500" step="50" value="200"
+                                    oninput="game.updateAutomationSetting('tellers', 'maxWithdrawalAmount', this.value); game.renderAutomationPanel()">
+                            </div>
+
+                            <div class="slider-control">
+                                <label>Min Reserve Ratio for Withdrawals: <span id="minReserveDisplay">30%</span></label>
+                                <input type="range" id="minReserveRatio" min="10" max="50" step="5" value="30"
+                                    oninput="game.updateAutomationSetting('tellers', 'minReserveRatioForWithdrawals', this.value); game.renderAutomationPanel()">
+                                <div class="hint">Won't approve withdrawals if reserves drop below this %</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loan Officer Automation -->
+                    <div class="automation-section">
+                        <h3>💼 Loan Officer Automation</h3>
+                        <div class="automation-controls">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoApproveLowRisk"
+                                    onchange="game.updateAutomationSetting('loanOfficers', 'autoApproveLowRisk', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-approve LOW risk loans</span>
+                            </label>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoApproveMediumRisk"
+                                    onchange="game.updateAutomationSetting('loanOfficers', 'autoApproveMediumRisk', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-approve MEDIUM risk loans</span>
+                            </label>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoApproveHighRisk"
+                                    onchange="game.updateAutomationSetting('loanOfficers', 'autoApproveHighRisk', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-approve HIGH risk loans ⚠️</span>
+                            </label>
+
+                            <div class="slider-control">
+                                <label>Max Auto-Loan Amount: <span id="maxLoanDisplay">$5000</span></label>
+                                <input type="range" id="maxLoanAmount" min="1000" max="10000" step="500" value="5000"
+                                    oninput="game.updateAutomationSetting('loanOfficers', 'maxLoanAmount', this.value); game.renderAutomationPanel()">
+                            </div>
+
+                            <div class="slider-control">
+                                <label>Min Cash Buffer: <span id="minCashBufferDisplay">1.5x</span></label>
+                                <input type="range" id="minCashBuffer" min="1" max="3" step="0.1" value="1.5"
+                                    oninput="game.updateAutomationSetting('loanOfficers', 'minCashBuffer', this.value); game.renderAutomationPanel()">
+                                <div class="hint">Requires this much cash vs loan amount before approving</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manager Automation -->
+                    <div class="automation-section">
+                        <h3>🎩 Manager Automation</h3>
+                        <div class="automation-controls">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoInvest"
+                                    onchange="game.updateAutomationSetting('managers', 'autoInvest', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-invest excess cash</span>
+                            </label>
+
+                            <div class="slider-control">
+                                <label>Auto-Invest Threshold: <span id="autoInvestThresholdDisplay">$2000</span></label>
+                                <input type="range" id="autoInvestThreshold" min="500" max="10000" step="500" value="2000"
+                                    oninput="game.updateAutomationSetting('managers', 'autoInvestThreshold', this.value); game.renderAutomationPanel()">
+                                <div class="hint">Only invest if cash exceeds this amount</div>
+                            </div>
+
+                            <div class="slider-control">
+                                <label>Investment Percentage: <span id="autoInvestPercentageDisplay">10%</span></label>
+                                <input type="range" id="autoInvestPercentage" min="5" max="50" step="5" value="10"
+                                    oninput="game.updateAutomationSetting('managers', 'autoInvestPercentage', this.value); game.renderAutomationPanel()">
+                                <div class="hint">% of excess cash to invest monthly</div>
+                            </div>
+
+                            <div class="select-control">
+                                <label>Preferred Investment Type:</label>
+                                <select id="preferredInvestment"
+                                    onchange="game.updateAutomationSetting('managers', 'preferredInvestment', this.value); game.renderAutomationPanel()">
+                                    <option value="bonds">Bonds (Low Risk, Low Return)</option>
+                                    <option value="stocks">Stocks (Medium Risk, Medium Return)</option>
+                                    <option value="speculative">Speculative (High Risk, High Return)</option>
+                                </select>
+                            </div>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoUpgradeTech"
+                                    onchange="game.updateAutomationSetting('managers', 'autoUpgradeTech', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-upgrade technologies (cheapest first)</span>
+                            </label>
+
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoHireStaff"
+                                    onchange="game.updateAutomationSetting('managers', 'autoHireStaff', this.checked); game.renderAutomationPanel()">
+                                <span>Auto-hire staff when affordable</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Panel -->
+            <div class="panel statistics-panel" id="statisticsPanel" style="display: none;">
+                <h2>📊 Statistics & Analytics</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Customers Served</div>
+                        <div class="stat-value" id="statCustomersServed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Deposits Processed</div>
+                        <div class="stat-value" id="statDepositsProcessed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Withdrawals Processed</div>
+                        <div class="stat-value" id="statWithdrawalsProcessed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Loans Issued</div>
+                        <div class="stat-value" id="statLoansIssued">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Loan Defaults</div>
+                        <div class="stat-value" id="statLoanDefaults">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Robberies Prevented</div>
+                        <div class="stat-value" id="statRobberiesPrevented">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Robberies Succeeded</div>
+                        <div class="stat-value" id="statRobberiesSucceeded">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h3>Cash Reserves Over Time</h3>
+                        <canvas id="cashChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Customer Deposits Over Time</h3>
+                        <canvas id="depositsChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Total Profit Over Time</h3>
+                        <canvas id="profitChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Active Accounts Over Time</h3>
+                        <canvas id="accountsChart" width="400" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automation Settings Toggle Button -->
+        <div class="automation-toggle">
+            <button id="toggleAutomationBtn" onclick="game.toggleAutomationPanel()">⚙️ Automation</button>
+        </div>
+
+        <!-- Statistics Toggle Button -->
+        <div class="statistics-toggle">
+            <button id="toggleStatsBtn" onclick="game.toggleStatistics()">📊 Statistics</button>
         </div>
     </div>
 

@@ -61,6 +61,14 @@ header h1 {
     font-weight: bold;
 }
 
+.version-info {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.8;
+}
+
 .game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -133,6 +141,13 @@ header h1 {
 .customer-info {
     margin-bottom: 10px;
     font-size: 1.1rem;
+}
+
+.customer-reason {
+    font-size: 0.85rem;
+    color: var(--text-warning);
+    font-style: italic;
+    margin-top: 5px;
 }
 
 .customer-actions {
@@ -513,6 +528,36 @@ header h1 {
 }
 
 /* Controls Panel */
+.day-progress-container {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.day-progress-label {
+    text-align: center;
+    color: var(--text-secondary);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.day-progress-bar-container {
+    width: 100%;
+    height: 12px;
+    background: var(--primary-bg);
+    border: 2px solid var(--text-primary);
+    overflow: hidden;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.day-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--text-success), var(--text-primary));
+    transition: width 0.05s linear;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+}
+
 .time-controls {
     display: flex;
     gap: 10px;
@@ -549,14 +594,62 @@ header h1 {
     color: var(--text-success);
 }
 
-.auto-approve-control {
+.withdrawal-threshold-control {
     margin-bottom: 15px;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
 }
 
-.auto-approve-control button {
+.withdrawal-threshold-control label {
+    display: block;
+    color: var(--text-secondary);
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.withdrawal-threshold-control span {
+    color: var(--text-warning);
+    font-size: 1.1rem;
+}
+
+.withdrawal-threshold-control input[type="range"] {
     width: 100%;
-    padding: 12px;
-    font-size: 1rem;
+    margin: 10px 0;
+    height: 8px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.withdrawal-threshold-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--text-success);
+    cursor: pointer;
+    border: 2px solid var(--text-primary);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.withdrawal-threshold-control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--text-success);
+    cursor: pointer;
+    border: 2px solid var(--text-primary);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.threshold-labels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 5px;
 }
 
 .game-date {
@@ -861,6 +954,273 @@ button.active {
 .wage-info span {
     color: var(--text-warning);
     font-size: 1.1rem;
+}
+
+.loan-officer-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-info);
+    font-size: 0.9rem;
+}
+
+/* Automation Panel */
+.automation-toggle {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.automation-toggle button {
+    background: var(--btn-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--text-primary);
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.automation-toggle button:hover {
+    background: var(--btn-hover);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.automation-toggle button.active {
+    background: var(--text-primary);
+    color: var(--primary-bg);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.7);
+}
+
+.automation-panel {
+    grid-column: 1 / -1;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.automation-hint {
+    color: var(--text-info);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.automation-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.automation-section {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 20px;
+}
+
+.automation-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.automation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.checkbox-label:hover {
+    color: var(--text-success);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--text-primary);
+}
+
+.slider-control {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.slider-control label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.slider-control input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--primary-bg);
+    outline: none;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.slider-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--text-primary);
+    cursor: pointer;
+    border: 2px solid var(--primary-bg);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.slider-control input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--text-primary);
+    cursor: pointer;
+    border: 2px solid var(--primary-bg);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.slider-control .hint {
+    font-size: 0.8rem;
+    color: var(--text-info);
+    font-style: italic;
+}
+
+.select-control {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.select-control label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.select-control select {
+    background: var(--primary-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    padding: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.select-control select:focus {
+    outline: none;
+    border-color: var(--text-primary);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+/* Statistics Panel */
+.statistics-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.statistics-toggle button {
+    background: var(--btn-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--text-primary);
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.statistics-toggle button:hover {
+    background: var(--btn-hover);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.statistics-toggle button.active {
+    background: var(--text-primary);
+    color: var(--primary-bg);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.7);
+}
+
+.statistics-panel {
+    grid-column: 1 / -1;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.chart-wrapper {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+}
+
+.chart-wrapper h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.chart-wrapper canvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
 }
 
 /* Responsive */
