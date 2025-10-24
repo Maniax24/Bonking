@@ -2831,6 +2831,11 @@ class BankGame {
         this.updateEconomyDisplay();
         this.updateBranchesDisplay();
         this.updateProductsDisplay();
+
+        // Update statistics if panel is open
+        if (this.showStatistics) {
+            this.renderStatistics();
+        }
     }
 
     // Objectives System
