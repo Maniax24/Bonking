@@ -969,7 +969,7 @@ button.active {
 /* Automation Panel */
 .automation-toggle {
     position: fixed;
-    bottom: 100px;
+    bottom: 95px;
     right: 20px;
     z-index: 1000;
 }
@@ -1557,19 +1557,19 @@ button.active {
 }
 
 .competitors-toggle {
-    bottom: 90px;
+    bottom: 170px;
 }
 
 .economy-toggle {
-    bottom: 165px;
+    bottom: 245px;
 }
 
 .branches-toggle {
-    bottom: 240px;
+    bottom: 320px;
 }
 
 .products-toggle {
-    bottom: 315px;
+    bottom: 395px;
 }
 
 .competitors-toggle button,

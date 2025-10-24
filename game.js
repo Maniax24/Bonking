@@ -777,7 +777,7 @@ class BankGame {
             this.startProgressBar();
             const btn = document.getElementById('autoBtn');
             if (btn) {
-                btn.textContent = 'Pause';
+                btn.textContent = '⏸️ Auto: ON';
                 btn.classList.add('active');
             }
         }
@@ -788,12 +788,12 @@ class BankGame {
         const btn = document.getElementById('autoBtn');
 
         if (this.autoAdvance) {
-            btn.textContent = 'Pause';
+            btn.textContent = '⏸️ Auto: ON';
             btn.classList.add('active');
             this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
             this.startProgressBar();
         } else {
-            btn.textContent = 'Play';
+            btn.textContent = '▶️ Auto: OFF';
             btn.classList.remove('active');
             clearInterval(this.autoInterval);
             this.autoInterval = null;
