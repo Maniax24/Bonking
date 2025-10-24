@@ -16,8 +16,6 @@ class BankGame {
         this.activeAccounts = 0;
         this.customerTrust = 100;
         this.customerQueue = [];
-        this.autoApproveDeposits = true; // Auto-approve deposits by default
-        this.autoWithdrawalThreshold = 200; // Max withdrawal amount to auto-approve
 
         // Loan System
         this.loans = []; // Active loans
@@ -25,7 +23,6 @@ class BankGame {
         this.totalLoansIssued = 0;
         this.totalLoanDefaults = 0;
         this.loanIdCounter = 0;
-        this.autoApproveLowRiskLoans = true; // Auto-approve low-risk loans with loan officers
 
         // Staff Management
         this.staff = {
@@ -36,6 +33,32 @@ class BankGame {
         };
         this.bankLevel = 1; // Bank size/upgrade level
         this.maxStaff = { tellers: 2, guards: 1, managers: 0, loanOfficers: 0 }; // Max staff at current level
+
+        // Staff Automation Settings
+        this.automation = {
+            tellers: {
+                autoApproveDeposits: true,
+                autoApproveWithdrawals: true,
+                maxWithdrawalAmount: 200,
+                minReserveRatioForWithdrawals: 30 // % - won't approve if reserves drop below this
+            },
+            loanOfficers: {
+                autoApproveLowRisk: true,
+                autoApproveMediumRisk: false,
+                autoApproveHighRisk: false,
+                maxLoanAmount: 5000,
+                minCashBuffer: 1.5 // Multiplier - need this much cash vs loan amount
+            },
+            managers: {
+                autoInvest: false,
+                autoInvestThreshold: 2000, // Only invest if cash above this
+                autoInvestPercentage: 10, // % of excess cash to invest
+                preferredInvestment: 'bonds', // 'bonds', 'stocks', 'speculative'
+                autoUpgradeTech: false,
+                autoHireStaff: false
+            }
+        };
+        this.showAutomationPanel = false;
 
         // Time and Era
         this.currentYear = 1920;
@@ -146,7 +169,7 @@ class BankGame {
     // Save/Load System
     saveGame() {
         const saveData = {
-            version: '1.1',
+            version: '1.2',
             timestamp: Date.now(),
             cashReserves: this.cashReserves,
             customerDeposits: this.customerDeposits,
@@ -366,6 +389,7 @@ class BankGame {
             // Process monthly events
             this.processLoans();
             this.processInvestments();
+            this.processManagerAutomation(); // Manager automated tasks
             this.processThiefEvents();
             this.processWages();
             this.checkObjectives();
@@ -450,14 +474,64 @@ class BankGame {
         }
     }
 
-    toggleAutoApprove() {
-        this.autoApproveDeposits = !this.autoApproveDeposits;
-        const btn = document.getElementById('autoApproveBtn');
-        if (btn) {
-            btn.textContent = this.autoApproveDeposits ? 'Auto-Approve: ON' : 'Auto-Approve: OFF';
-            btn.classList.toggle('active', this.autoApproveDeposits);
+    toggleAutomationPanel() {
+        this.showAutomationPanel = !this.showAutomationPanel;
+        const panel = document.getElementById('automationPanel');
+        const btn = document.getElementById('toggleAutomationBtn');
+
+        if (this.showAutomationPanel) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.renderAutomationPanel();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
         }
-        this.addEvent(`Auto-approve deposits: ${this.autoApproveDeposits ? 'ON' : 'OFF'}`, 'info');
+    }
+
+    updateAutomationSetting(category, setting, value) {
+        // Parse value appropriately
+        if (typeof this.automation[category][setting] === 'boolean') {
+            this.automation[category][setting] = value;
+        } else if (typeof this.automation[category][setting] === 'number') {
+            this.automation[category][setting] = parseFloat(value);
+        } else {
+            this.automation[category][setting] = value;
+        }
+
+        this.addEvent(`Updated ${category} automation: ${setting}`, 'info');
+    }
+
+    renderAutomationPanel() {
+        // This will populate the automation panel with current settings
+        // Update all checkbox and input values to match current automation settings
+
+        // Tellers
+        document.getElementById('autoApproveDeposits').checked = this.automation.tellers.autoApproveDeposits;
+        document.getElementById('autoApproveWithdrawals').checked = this.automation.tellers.autoApproveWithdrawals;
+        document.getElementById('maxWithdrawalAmount').value = this.automation.tellers.maxWithdrawalAmount;
+        document.getElementById('maxWithdrawalDisplay').textContent = `$${this.automation.tellers.maxWithdrawalAmount}`;
+        document.getElementById('minReserveRatio').value = this.automation.tellers.minReserveRatioForWithdrawals;
+        document.getElementById('minReserveDisplay').textContent = `${this.automation.tellers.minReserveRatioForWithdrawals}%`;
+
+        // Loan Officers
+        document.getElementById('autoApproveLowRisk').checked = this.automation.loanOfficers.autoApproveLowRisk;
+        document.getElementById('autoApproveMediumRisk').checked = this.automation.loanOfficers.autoApproveMediumRisk;
+        document.getElementById('autoApproveHighRisk').checked = this.automation.loanOfficers.autoApproveHighRisk;
+        document.getElementById('maxLoanAmount').value = this.automation.loanOfficers.maxLoanAmount;
+        document.getElementById('maxLoanDisplay').textContent = `$${this.automation.loanOfficers.maxLoanAmount}`;
+        document.getElementById('minCashBuffer').value = this.automation.loanOfficers.minCashBuffer;
+        document.getElementById('minCashBufferDisplay').textContent = `${this.automation.loanOfficers.minCashBuffer}x`;
+
+        // Managers
+        document.getElementById('autoInvest').checked = this.automation.managers.autoInvest;
+        document.getElementById('autoInvestThreshold').value = this.automation.managers.autoInvestThreshold;
+        document.getElementById('autoInvestThresholdDisplay').textContent = `$${this.automation.managers.autoInvestThreshold}`;
+        document.getElementById('autoInvestPercentage').value = this.automation.managers.autoInvestPercentage;
+        document.getElementById('autoInvestPercentageDisplay').textContent = `${this.automation.managers.autoInvestPercentage}%`;
+        document.getElementById('preferredInvestment').value = this.automation.managers.preferredInvestment;
+        document.getElementById('autoUpgradeTech').checked = this.automation.managers.autoUpgradeTech;
+        document.getElementById('autoHireStaff').checked = this.automation.managers.autoHireStaff;
     }
 
     changeSpeed(speed) {
@@ -476,14 +550,6 @@ class BankGame {
         this.addEvent(`Speed changed to ${speedName} (${speed/1000}s per day)`, 'info');
     }
 
-    updateWithdrawalThreshold(value) {
-        this.autoWithdrawalThreshold = parseInt(value);
-        const display = document.getElementById('withdrawalThresholdDisplay');
-        if (display) {
-            display.textContent = `$${this.autoWithdrawalThreshold}`;
-        }
-    }
-
     // Customer Management
 
     generateCustomer() {
@@ -497,7 +563,7 @@ class BankGame {
             amount = Math.floor(Math.random() * 500 + 100);
 
             // Auto-approve deposits if setting is on AND teller capacity available
-            if (this.autoApproveDeposits && canAutoApprove) {
+            if (this.automation.tellers.autoApproveDeposits && canAutoApprove) {
                 this.cashReserves += amount;
                 this.customerDeposits += amount;
                 this.activeAccounts++;
@@ -511,16 +577,16 @@ class BankGame {
             if (this.customerDeposits <= 0) return;
             amount = Math.floor(Math.random() * Math.min(300, this.customerDeposits));
 
-            // Auto-approve small withdrawals if we have plenty of cash AND teller capacity
-            // Only show withdrawal requests if:
-            // 1. Amount is larger than threshold OR
-            // 2. Would bring reserves below 30% of deposits OR
-            // 3. No teller capacity available
+            // Auto-approve small withdrawals if settings allow AND teller capacity available
             const reserveRatioAfter = ((this.cashReserves - amount) / this.customerDeposits) * 100;
-            const isSmallWithdrawal = amount <= this.autoWithdrawalThreshold;
-            const hasGoodReserves = reserveRatioAfter >= 30;
+            const isWithinAmountLimit = amount <= this.automation.tellers.maxWithdrawalAmount;
+            const hasGoodReserves = reserveRatioAfter >= this.automation.tellers.minReserveRatioForWithdrawals;
 
-            if (isSmallWithdrawal && hasGoodReserves && this.cashReserves >= amount && canAutoApprove) {
+            if (this.automation.tellers.autoApproveWithdrawals &&
+                isWithinAmountLimit &&
+                hasGoodReserves &&
+                this.cashReserves >= amount &&
+                canAutoApprove) {
                 // Auto-approve small, safe withdrawals
                 this.cashReserves -= amount;
                 this.customerDeposits -= amount;
@@ -658,12 +724,23 @@ class BankGame {
             requestDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
         };
 
-        // Auto-approve low-risk loans if we have loan officers
+        // Auto-approve loans based on automation settings
         const hasLoanOfficers = this.staff.loanOfficers > 0;
-        const isLowRisk = loanType.risk === 'low';
-        const hasEnoughCash = this.cashReserves >= amount * 1.5; // Need 50% buffer
+        const hasEnoughCash = this.cashReserves >= amount * this.automation.loanOfficers.minCashBuffer;
+        const isWithinAmountLimit = amount <= this.automation.loanOfficers.maxLoanAmount;
 
-        if (this.autoApproveLowRiskLoans && hasLoanOfficers && isLowRisk && hasEnoughCash) {
+        let shouldAutoApprove = false;
+        if (hasLoanOfficers && hasEnoughCash && isWithinAmountLimit) {
+            if (loanType.risk === 'low' && this.automation.loanOfficers.autoApproveLowRisk) {
+                shouldAutoApprove = true;
+            } else if (loanType.risk === 'medium' && this.automation.loanOfficers.autoApproveMediumRisk) {
+                shouldAutoApprove = true;
+            } else if (loanType.risk === 'high' && this.automation.loanOfficers.autoApproveHighRisk) {
+                shouldAutoApprove = true;
+            }
+        }
+
+        if (shouldAutoApprove) {
             // Auto-approve the loan
             this.cashReserves -= amount;
             const monthlyPayment = this.calculateLoanPayment(amount, loanType.interestRate, termMonths);
@@ -1075,6 +1152,69 @@ class BankGame {
 
         if (totalReturns > 10) {
             this.addEvent(`Investment returns: +$${Math.floor(totalReturns)}`, 'success');
+        }
+    }
+
+    processManagerAutomation() {
+        if (this.staff.managers <= 0) return; // Need managers for automation
+
+        const settings = this.automation.managers;
+
+        // Auto-invest excess cash
+        if (settings.autoInvest && this.cashReserves > settings.autoInvestThreshold) {
+            const excessCash = this.cashReserves - settings.autoInvestThreshold;
+            const investAmount = Math.floor(excessCash * (settings.autoInvestPercentage / 100));
+
+            if (investAmount > 0) {
+                this.cashReserves -= investAmount;
+                this.investments[settings.preferredInvestment] += investAmount;
+                this.addEvent(`Managers auto-invested $${investAmount} in ${settings.preferredInvestment}`, 'info');
+            }
+        }
+
+        // Auto-upgrade tech (cheapest available)
+        if (settings.autoUpgradeTech) {
+            let cheapestTech = null;
+            let cheapestCost = Infinity;
+            let cheapestCategory = null;
+
+            for (let category in this.technologies) {
+                this.technologies[category].forEach(tech => {
+                    if (tech.minYear && this.currentYear < tech.minYear) return;
+                    if (tech.level >= tech.maxLevel) return;
+
+                    const cost = tech.cost * (tech.level + 1);
+                    if (cost < cheapestCost && this.cashReserves >= cost) {
+                        cheapestTech = tech;
+                        cheapestCost = cost;
+                        cheapestCategory = category;
+                    }
+                });
+            }
+
+            if (cheapestTech && this.cashReserves >= cheapestCost * 2) { // Keep safety buffer
+                this.researchTech(cheapestCategory, cheapestTech.id);
+            }
+        }
+
+        // Auto-hire staff (when capacity allows and affordable)
+        if (settings.autoHireStaff) {
+            const wages = { tellers: 50, guards: 80, managers: 120, loanOfficers: 100 };
+
+            for (let role in this.staff) {
+                if (this.staff[role] < this.maxStaff[role]) {
+                    const wage = wages[role];
+                    const hireCost = wage * 3;
+
+                    // Only hire if we have plenty of cash
+                    if (this.cashReserves >= hireCost * 5) { // 5x buffer
+                        this.staff[role]++;
+                        this.cashReserves -= hireCost;
+                        this.addEvent(`Managers auto-hired ${role.slice(0, -1)}`, 'info');
+                        break; // Only hire one staff per month
+                    }
+                }
+            }
         }
     }
 
