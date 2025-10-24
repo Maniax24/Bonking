@@ -16,6 +16,24 @@ class BankGame {
         this.activeAccounts = 0;
         this.customerTrust = 100;
         this.customerQueue = [];
+        this.autoApproveDeposits = true; // Auto-approve deposits by default
+
+        // Loan System
+        this.loans = []; // Active loans
+        this.loanQueue = []; // Pending loan requests
+        this.totalLoansIssued = 0;
+        this.totalLoanDefaults = 0;
+        this.loanIdCounter = 0;
+
+        // Staff Management
+        this.staff = {
+            tellers: 0,     // Handle more customer transactions
+            guards: 0,      // Increase security
+            managers: 0,    // Reduce operating costs
+            loanOfficers: 0 // Increase loan capacity
+        };
+        this.bankLevel = 1; // Bank size/upgrade level
+        this.maxStaff = { tellers: 2, guards: 1, managers: 0, loanOfficers: 0 }; // Max staff at current level
 
         // Time and Era
         this.currentYear = 1920;
@@ -23,22 +41,34 @@ class BankGame {
         this.monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                           'July', 'August', 'September', 'October', 'November', 'December'];
         this.era = this.getEra();
-        this.autoAdvance = false;
+        this.autoAdvance = true; // Start with auto-advance ON
         this.autoInterval = null;
+        this.timeSpeed = 1500; // milliseconds between months
 
         // Technology
         this.technologies = {
             security: [
-                { id: 'vault1', name: 'Reinforced Vault', cost: 500, level: 0, protection: 20, maxLevel: 3 },
-                { id: 'guards', name: 'Security Guards', cost: 800, level: 0, protection: 30, maxLevel: 3 },
-                { id: 'alarm', name: 'Alarm System', cost: 1500, level: 0, protection: 40, maxLevel: 2 },
-                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950 }
+                { id: 'vault1', name: 'Reinforced Vault', cost: 500, level: 0, protection: 20, maxLevel: 3, desc: 'Better vault protection' },
+                { id: 'guards', name: 'Security Guards', cost: 800, level: 0, protection: 30, maxLevel: 3, desc: 'Hire security personnel' },
+                { id: 'alarm', name: 'Alarm System', cost: 1500, level: 0, protection: 40, maxLevel: 2, desc: 'Alert system for threats' },
+                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950, desc: 'Video surveillance' }
             ],
             profit: [
-                { id: 'accounting', name: 'Better Accounting', cost: 400, level: 0, bonus: 0.05, maxLevel: 3 },
-                { id: 'marketing', name: 'Marketing Campaign', cost: 600, level: 0, bonus: 0.08, maxLevel: 3 },
-                { id: 'automation', name: 'Office Automation', cost: 2000, level: 0, bonus: 0.15, maxLevel: 2, minYear: 1960 },
-                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990 }
+                { id: 'accounting', name: 'Better Accounting', cost: 400, level: 0, bonus: 0.05, maxLevel: 3, desc: '+5% profit per level' },
+                { id: 'marketing', name: 'Marketing Campaign', cost: 600, level: 0, bonus: 0.08, maxLevel: 3, desc: '+8% profit per level' },
+                { id: 'automation', name: 'Office Automation', cost: 2000, level: 0, bonus: 0.15, maxLevel: 2, minYear: 1960, desc: '+15% profit per level' },
+                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990, desc: '+25% profit per level' }
+            ],
+            customer: [
+                { id: 'service', name: 'Customer Service', cost: 300, level: 0, benefit: 2, maxLevel: 5, desc: '+2% trust recovery per level' },
+                { id: 'rewards', name: 'Rewards Program', cost: 800, level: 0, benefit: 0.5, maxLevel: 3, desc: '+0.5 customers/month per level' },
+                { id: 'branches', name: 'New Branches', cost: 2000, level: 0, benefit: 1, maxLevel: 3, minYear: 1940, desc: '+1 customer/month per level' },
+                { id: 'atm', name: 'ATM Network', cost: 4000, level: 0, benefit: 2, maxLevel: 2, minYear: 1970, desc: '+2 customers/month per level' }
+            ],
+            efficiency: [
+                { id: 'training', name: 'Staff Training', cost: 500, level: 0, benefit: 0.02, maxLevel: 3, desc: '-2% operating costs per level' },
+                { id: 'systems', name: 'Better Systems', cost: 1200, level: 0, benefit: 0.03, maxLevel: 3, minYear: 1950, desc: '-3% costs per level' },
+                { id: 'ai', name: 'AI Assistant', cost: 6000, level: 0, benefit: 0.05, maxLevel: 2, minYear: 2000, desc: '-5% costs per level' }
             ]
         };
 
@@ -50,14 +80,31 @@ class BankGame {
         this.eventLog = [];
         this.lastThiefAttempt = 0;
 
+        // Objectives System
+        this.objectives = [
+            { id: 'cash_5k', name: 'Reach $5,000 cash', target: 5000, type: 'cash', completed: false, reward: 500 },
+            { id: 'cash_10k', name: 'Reach $10,000 cash', target: 10000, type: 'cash', completed: false, reward: 1000 },
+            { id: 'cash_50k', name: 'Reach $50,000 cash', target: 50000, type: 'cash', completed: false, reward: 5000 },
+            { id: 'year_1930', name: 'Survive until 1930', target: 1930, type: 'year', completed: false, reward: 2000 },
+            { id: 'year_1950', name: 'Survive until 1950', target: 1950, type: 'year', completed: false, reward: 5000 },
+            { id: 'year_1970', name: 'Survive until 1970', target: 1970, type: 'year', completed: false, reward: 10000 },
+            { id: 'profit_10k', name: 'Earn $10,000 total profit', target: 10000, type: 'profit', completed: false, reward: 2000 },
+            { id: 'profit_50k', name: 'Earn $50,000 total profit', target: 50000, type: 'profit', completed: false, reward: 10000 },
+            { id: 'accounts_50', name: 'Reach 50 active accounts', target: 50, type: 'accounts', completed: false, reward: 1000 },
+            { id: 'accounts_100', name: 'Reach 100 active accounts', target: 100, type: 'accounts', completed: false, reward: 3000 },
+            { id: 'trust_100', name: 'Maintain 100% trust for 1 year', target: 12, type: 'trust', completed: false, reward: 2000, counter: 0 },
+            { id: 'security_max', name: 'Max out all security tech', target: 1, type: 'security', completed: false, reward: 5000 },
+            { id: 'profit_max', name: 'Max out all profit tech', target: 1, type: 'profit_tech', completed: false, reward: 5000 }
+        ];
+
         this.init();
     }
 
     init() {
         this.updateDisplay();
         this.renderTechTree();
-        this.scheduleCustomer();
         this.checkAutoSave();
+        this.startAutoAdvance(); // Start time progression automatically
     }
 
     // Save/Load System
@@ -268,12 +315,45 @@ class BankGame {
             this.saveGame();
         }
 
+        // Generate 2-4 customers each month + customer tech bonuses
+        const baseCustomers = Math.floor(Math.random() * 3) + 2;
+        const bonusCustomers = Math.floor(this.getCustomerBonus());
+        const customerCount = baseCustomers + bonusCustomers;
+
+        for (let i = 0; i < customerCount; i++) {
+            this.generateCustomer();
+        }
+
+        // Generate loan requests (1-2 per month, 30% chance)
+        if (Math.random() < 0.3) {
+            const loanCount = Math.floor(Math.random() * 2) + 1;
+            for (let i = 0; i < loanCount; i++) {
+                this.generateLoanRequest();
+            }
+        }
+
         // Process monthly events
+        this.processLoans();
         this.processInvestments();
         this.processCustomerEvents();
         this.processThiefEvents();
+        this.processWages();
+
+        // Check objectives
+        this.checkObjectives();
 
         this.updateDisplay();
+    }
+
+    startAutoAdvance() {
+        if (this.autoAdvance && !this.autoInterval) {
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+            const btn = document.getElementById('autoBtn');
+            if (btn) {
+                btn.textContent = 'Pause';
+                btn.classList.add('active');
+            }
+        }
     }
 
     toggleAutoPause() {
@@ -281,24 +361,42 @@ class BankGame {
         const btn = document.getElementById('autoBtn');
 
         if (this.autoAdvance) {
-            btn.textContent = 'Auto: ON';
+            btn.textContent = 'Pause';
             btn.classList.add('active');
-            this.autoInterval = setInterval(() => this.advanceTime(), 2000);
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
         } else {
-            btn.textContent = 'Auto: OFF';
+            btn.textContent = 'Play';
             btn.classList.remove('active');
             clearInterval(this.autoInterval);
+            this.autoInterval = null;
         }
     }
 
-    // Customer Management
-    scheduleCustomer() {
-        const delay = Math.random() * 3000 + 2000; // 2-5 seconds
-        setTimeout(() => {
-            this.generateCustomer();
-            this.scheduleCustomer();
-        }, delay);
+    toggleAutoApprove() {
+        this.autoApproveDeposits = !this.autoApproveDeposits;
+        const btn = document.getElementById('autoApproveBtn');
+        if (btn) {
+            btn.textContent = this.autoApproveDeposits ? 'Auto-Approve: ON' : 'Auto-Approve: OFF';
+            btn.classList.toggle('active', this.autoApproveDeposits);
+        }
+        this.addEvent(`Auto-approve deposits: ${this.autoApproveDeposits ? 'ON' : 'OFF'}`, 'info');
     }
+
+    changeSpeed(speed) {
+        this.timeSpeed = speed;
+        if (this.autoInterval) {
+            clearInterval(this.autoInterval);
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+        }
+
+        // Update button states
+        document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        this.addEvent(`Speed changed to ${speed === 500 ? 'Fast' : speed === 1500 ? 'Normal' : 'Slow'}`, 'info');
+    }
+
+    // Customer Management
 
     generateCustomer() {
         const types = ['deposit', 'deposit', 'deposit', 'withdrawal']; // More deposits than withdrawals
@@ -307,6 +405,14 @@ class BankGame {
         let amount;
         if (type === 'deposit') {
             amount = Math.floor(Math.random() * 500 + 100);
+
+            // Auto-approve deposits if setting is on
+            if (this.autoApproveDeposits) {
+                this.cashReserves += amount;
+                this.customerDeposits += amount;
+                this.activeAccounts++;
+                return; // Don't display, just process
+            }
         } else {
             // Can only withdraw if there are deposits
             if (this.customerDeposits <= 0) return;
@@ -316,7 +422,7 @@ class BankGame {
         const customer = {
             type: type,
             amount: amount,
-            id: Date.now()
+            id: Date.now() + Math.random() // Ensure unique IDs
         };
 
         this.customerQueue.push(customer);
@@ -350,13 +456,13 @@ class BankGame {
 
         queueDiv.appendChild(customerDiv);
 
-        // Auto-remove after 15 seconds
+        // Auto-deny after 8 seconds (faster pace now)
         setTimeout(() => {
             const elem = document.getElementById(`customer-${customer.id}`);
             if (elem) {
                 this.handleCustomer(customer.id, false);
             }
-        }, 15000);
+        }, 8000);
     }
 
     handleCustomer(customerId, approve) {
@@ -392,6 +498,383 @@ class BankGame {
         this.customerQueue.splice(customerIndex, 1);
         if (customerDiv) customerDiv.remove();
         this.updateDisplay();
+    }
+
+    // Loan System
+    generateLoanRequest() {
+        // Loan purposes with different risk profiles
+        const loanTypes = [
+            { purpose: 'Home Purchase', risk: 'low', baseAmount: 5000, interestRate: 0.05 },
+            { purpose: 'Business Startup', risk: 'high', baseAmount: 3000, interestRate: 0.12 },
+            { purpose: 'Education', risk: 'low', baseAmount: 2000, interestRate: 0.04 },
+            { purpose: 'Car Purchase', risk: 'medium', baseAmount: 1500, interestRate: 0.07 },
+            { purpose: 'Home Renovation', risk: 'medium', baseAmount: 2500, interestRate: 0.06 },
+            { purpose: 'Business Expansion', risk: 'medium', baseAmount: 4000, interestRate: 0.08 },
+            { purpose: 'Debt Consolidation', risk: 'high', baseAmount: 3500, interestRate: 0.10 },
+            { purpose: 'Medical Expenses', risk: 'medium', baseAmount: 1000, interestRate: 0.07 },
+            { purpose: 'Speculative Investment', risk: 'high', baseAmount: 2000, interestRate: 0.15 }
+        ];
+
+        const loanType = loanTypes[Math.floor(Math.random() * loanTypes.length)];
+        const amount = Math.floor(loanType.baseAmount * (0.7 + Math.random() * 0.6)); // ±30% variance
+        const termMonths = [12, 24, 36, 48, 60][Math.floor(Math.random() * 5)];
+
+        // Calculate default probability based on risk
+        let defaultProbability;
+        switch (loanType.risk) {
+            case 'low': defaultProbability = 0.02; break; // 2% chance per year
+            case 'medium': defaultProbability = 0.05; break; // 5% chance per year
+            case 'high': defaultProbability = 0.10; break; // 10% chance per year
+        }
+
+        const loanRequest = {
+            id: this.loanIdCounter++,
+            purpose: loanType.purpose,
+            amount: amount,
+            interestRate: loanType.interestRate,
+            termMonths: termMonths,
+            risk: loanType.risk,
+            defaultProbability: defaultProbability / 12, // Convert to monthly
+            requestDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+        };
+
+        this.loanQueue.push(loanRequest);
+        this.displayLoanRequest(loanRequest);
+    }
+
+    displayLoanRequest(loan) {
+        const queueDiv = document.getElementById('loanQueue');
+        if (!queueDiv) return;
+
+        const loanDiv = document.createElement('div');
+        loanDiv.className = `loan-request risk-${loan.risk}`;
+        loanDiv.id = `loan-${loan.id}`;
+
+        const monthlyPayment = this.calculateLoanPayment(loan.amount, loan.interestRate, loan.termMonths);
+        const totalRepayment = monthlyPayment * loan.termMonths;
+        const totalInterest = totalRepayment - loan.amount;
+
+        const riskColor = { low: '#44ff44', medium: '#ffaa00', high: '#ff4444' };
+
+        loanDiv.innerHTML = `
+            <div class="loan-header">
+                <span class="loan-purpose">${loan.purpose}</span>
+                <span class="loan-risk" style="color: ${riskColor[loan.risk]}">${loan.risk.toUpperCase()} RISK</span>
+            </div>
+            <div class="loan-details">
+                <div>Amount: $${loan.amount}</div>
+                <div>Interest: ${(loan.interestRate * 100).toFixed(1)}% APR</div>
+                <div>Term: ${loan.termMonths} months</div>
+                <div>Monthly Payment: $${Math.floor(monthlyPayment)}</div>
+                <div>Total Interest: $${Math.floor(totalInterest)}</div>
+            </div>
+            <div class="loan-actions">
+                <button onclick="game.handleLoan(${loan.id}, true)" class="approve-btn">✓ Approve Loan</button>
+                <button onclick="game.handleLoan(${loan.id}, false)" class="deny-btn">✗ Deny</button>
+            </div>
+        `;
+
+        queueDiv.appendChild(loanDiv);
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            const elem = document.getElementById(`loan-${loan.id}`);
+            if (elem) {
+                this.handleLoan(loan.id, false);
+            }
+        }, 10000);
+    }
+
+    calculateLoanPayment(principal, annualRate, months) {
+        const monthlyRate = annualRate / 12;
+        if (monthlyRate === 0) return principal / months;
+        return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) /
+               (Math.pow(1 + monthlyRate, months) - 1);
+    }
+
+    handleLoan(loanId, approve) {
+        const loanIndex = this.loanQueue.findIndex(l => l.id === loanId);
+        if (loanIndex === -1) return;
+
+        const loan = this.loanQueue[loanIndex];
+        const loanDiv = document.getElementById(`loan-${loanId}`);
+
+        if (approve) {
+            if (this.cashReserves < loan.amount) {
+                this.addEvent(`Cannot approve loan: insufficient cash reserves`, 'danger');
+                this.customerTrust = Math.max(0, this.customerTrust - 3);
+            } else {
+                // Issue the loan
+                this.cashReserves -= loan.amount;
+                const monthlyPayment = this.calculateLoanPayment(loan.amount, loan.interestRate, loan.termMonths);
+
+                const activeLoan = {
+                    ...loan,
+                    monthlyPayment: monthlyPayment,
+                    remainingPayments: loan.termMonths,
+                    principalRemaining: loan.amount,
+                    totalPaid: 0,
+                    issueDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+                };
+
+                this.loans.push(activeLoan);
+                this.totalLoansIssued++;
+                this.customerTrust = Math.min(100, this.customerTrust + 2);
+                this.addEvent(`✓ Approved ${loan.purpose} loan: $${loan.amount} @ ${(loan.interestRate * 100).toFixed(1)}%`, 'success');
+            }
+        } else {
+            this.addEvent(`Denied loan request for ${loan.purpose}`, 'info');
+        }
+
+        this.loanQueue.splice(loanIndex, 1);
+        if (loanDiv) loanDiv.remove();
+        this.updateDisplay();
+    }
+
+    processLoans() {
+        const loansToRemove = [];
+
+        this.loans.forEach((loan, index) => {
+            // Check for default
+            if (Math.random() < loan.defaultProbability) {
+                // Loan defaults!
+                this.totalLoanDefaults++;
+                this.customerTrust = Math.max(0, this.customerTrust - 5);
+                this.addEvent(`💥 LOAN DEFAULT: ${loan.purpose} ($${Math.floor(loan.principalRemaining)} lost)`, 'danger');
+                loansToRemove.push(index);
+                return;
+            }
+
+            // Process monthly payment
+            this.cashReserves += loan.monthlyPayment;
+            loan.totalPaid += loan.monthlyPayment;
+            loan.remainingPayments--;
+
+            const interestPortion = (loan.principalRemaining * loan.interestRate / 12);
+            const principalPortion = loan.monthlyPayment - interestPortion;
+            loan.principalRemaining -= principalPortion;
+
+            this.totalProfit += interestPortion;
+
+            // Check if loan is paid off
+            if (loan.remainingPayments <= 0) {
+                const totalInterest = loan.totalPaid - loan.amount;
+                this.addEvent(`✓ Loan paid off: ${loan.purpose} (+$${Math.floor(totalInterest)} interest)`, 'success');
+                loansToRemove.push(index);
+            }
+        });
+
+        // Remove completed/defaulted loans (reverse order to maintain indices)
+        loansToRemove.reverse().forEach(index => {
+            this.loans.splice(index, 1);
+        });
+    }
+
+    updateLoanDisplay() {
+        const container = document.getElementById('activeLoansList');
+        if (!container) return;
+
+        if (this.loans.length === 0) {
+            container.innerHTML = '<div class="no-loans">No active loans</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        this.loans.forEach(loan => {
+            const div = document.createElement('div');
+            div.className = `active-loan risk-${loan.risk}`;
+
+            const percentPaid = ((loan.termMonths - loan.remainingPayments) / loan.termMonths) * 100;
+
+            div.innerHTML = `
+                <div class="loan-title">${loan.purpose} - $${Math.floor(loan.principalRemaining)}</div>
+                <div class="loan-progress-bar">
+                    <div class="loan-progress-fill" style="width: ${percentPaid}%"></div>
+                </div>
+                <div class="loan-info">
+                    ${loan.remainingPayments} payments left | $${Math.floor(loan.monthlyPayment)}/mo
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+
+    // Staff Management System
+    getStaffWages() {
+        const wages = {
+            tellers: 50,      // $50/month per teller
+            guards: 80,       // $80/month per guard
+            managers: 120,    // $120/month per manager
+            loanOfficers: 100 // $100/month per loan officer
+        };
+
+        let totalWages = 0;
+        for (let role in this.staff) {
+            totalWages += this.staff[role] * wages[role];
+        }
+        return totalWages;
+    }
+
+    hireStaff(role) {
+        const wages = {
+            tellers: 50,
+            guards: 80,
+            managers: 120,
+            loanOfficers: 100
+        };
+
+        if (this.staff[role] >= this.maxStaff[role]) {
+            this.addEvent(`Cannot hire more ${role} - upgrade bank first!`, 'warning');
+            return;
+        }
+
+        const wage = wages[role];
+        if (this.cashReserves < wage * 3) { // Require 3 months wages upfront
+            this.addEvent(`Need $${wage * 3} to hire ${role} (3 months wages)`, 'danger');
+            return;
+        }
+
+        this.staff[role]++;
+        this.cashReserves -= wage * 3;
+        this.addEvent(`✓ Hired ${role.slice(0, -1)}: +$${wage}/month wage`, 'success');
+        this.updateDisplay();
+    }
+
+    fireStaff(role) {
+        if (this.staff[role] <= 0) {
+            this.addEvent(`No ${role} to fire`, 'warning');
+            return;
+        }
+
+        this.staff[role]--;
+        this.customerTrust = Math.max(0, this.customerTrust - 3); // Firing damages morale
+        this.addEvent(`Fired ${role.slice(0, -1)} - trust decreased`, 'warning');
+        this.updateDisplay();
+    }
+
+    upgradeBank() {
+        const upgradeCosts = [0, 2000, 5000, 10000, 20000, 40000]; // Costs for levels 1-6
+        const nextLevel = this.bankLevel + 1;
+
+        if (nextLevel > 5) {
+            this.addEvent(`Bank is already at maximum level!`, 'warning');
+            return;
+        }
+
+        const cost = upgradeCosts[nextLevel];
+        if (this.cashReserves < cost) {
+            this.addEvent(`Need $${cost} to upgrade to Level ${nextLevel}`, 'danger');
+            return;
+        }
+
+        this.cashReserves -= cost;
+        this.bankLevel = nextLevel;
+
+        // Increase staff capacity
+        this.maxStaff = {
+            tellers: 2 + (nextLevel - 1) * 2,      // 2, 4, 6, 8, 10
+            guards: 1 + Math.floor((nextLevel - 1) / 2), // 1, 1, 2, 2, 3
+            managers: Math.max(0, nextLevel - 2),  // 0, 0, 1, 2, 3
+            loanOfficers: Math.max(0, nextLevel - 2) // 0, 0, 1, 2, 3
+        };
+
+        this.addEvent(`🏛️ Bank upgraded to Level ${nextLevel}! Staff capacity increased`, 'success');
+        this.updateDisplay();
+    }
+
+    processWages() {
+        const wages = this.getStaffWages();
+        if (wages > 0) {
+            if (this.cashReserves >= wages) {
+                this.cashReserves -= wages;
+                if (wages > 100) { // Only log if significant
+                    this.addEvent(`Paid staff wages: -$${wages}`, 'info');
+                }
+            } else {
+                // Can't pay wages! Staff quit and trust drops
+                const shortage = wages - this.cashReserves;
+                this.cashReserves = 0;
+                this.customerTrust = Math.max(0, this.customerTrust - 15);
+
+                // Some staff quit
+                if (this.staff.loanOfficers > 0) this.staff.loanOfficers = Math.max(0, this.staff.loanOfficers - 1);
+                else if (this.staff.managers > 0) this.staff.managers = Math.max(0, this.staff.managers - 1);
+                else if (this.staff.tellers > 0) this.staff.tellers = Math.max(0, this.staff.tellers - 1);
+
+                this.addEvent(`💥 WAGE CRISIS: Couldn't pay $${shortage}! Staff quit, trust plummeted!`, 'danger');
+            }
+        }
+    }
+
+    getStaffBonuses() {
+        return {
+            customerBonus: this.staff.tellers * 0.5, // +0.5 customers per teller
+            securityBonus: this.staff.guards * 25,   // +25 security per guard
+            costReduction: this.staff.managers * 0.05, // -5% costs per manager
+            loanCapacity: this.staff.loanOfficers * 2  // +2 max loans per officer
+        };
+    }
+
+    updateStaffDisplay() {
+        const container = document.getElementById('staffList');
+        if (!container) return;
+
+        const wages = { tellers: 50, guards: 80, managers: 120, loanOfficers: 100 };
+        const names = {
+            tellers: 'Tellers',
+            guards: 'Security Guards',
+            managers: 'Managers',
+            loanOfficers: 'Loan Officers'
+        };
+
+        container.innerHTML = '';
+
+        Object.keys(this.staff).forEach(role => {
+            const div = document.createElement('div');
+            div.className = 'staff-item';
+
+            const current = this.staff[role];
+            const max = this.maxStaff[role];
+            const wage = wages[role];
+
+            div.innerHTML = `
+                <div class="staff-header">
+                    <span class="staff-name">${names[role]}</span>
+                    <span class="staff-count">${current}/${max}</span>
+                </div>
+                <div class="staff-info">
+                    Wage: $${wage}/month each | Total: $${wage * current}/month
+                </div>
+                <div class="staff-actions">
+                    <button onclick="game.hireStaff('${role}')" ${current >= max ? 'disabled' : ''}>
+                        Hire ($${wage * 3})
+                    </button>
+                    <button onclick="game.fireStaff('${role}')" ${current <= 0 ? 'disabled' : ''} class="fire-btn">
+                        Fire
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+
+        // Add bank upgrade button
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.className = 'bank-upgrade';
+        const nextLevel = this.bankLevel + 1;
+        const costs = [0, 2000, 5000, 10000, 20000, 40000];
+        const cost = costs[nextLevel] || 0;
+
+        upgradeDiv.innerHTML = `
+            <h3>Bank Level: ${this.bankLevel}/5</h3>
+            <button onclick="game.upgradeBank()" ${nextLevel > 5 ? 'disabled' : ''}>
+                ${nextLevel > 5 ? 'MAX LEVEL' : `Upgrade Bank ($${cost})`}
+            </button>
+        `;
+
+        container.appendChild(upgradeDiv);
     }
 
     // Investment Management
@@ -501,18 +984,32 @@ class BankGame {
     renderTechTree() {
         const securityDiv = document.getElementById('securityTech');
         const profitDiv = document.getElementById('profitTech');
+        const customerDiv = document.getElementById('customerTech');
+        const efficiencyDiv = document.getElementById('efficiencyTech');
 
-        securityDiv.innerHTML = '';
-        profitDiv.innerHTML = '';
+        if (securityDiv) securityDiv.innerHTML = '';
+        if (profitDiv) profitDiv.innerHTML = '';
+        if (customerDiv) customerDiv.innerHTML = '';
+        if (efficiencyDiv) efficiencyDiv.innerHTML = '';
 
         this.technologies.security.forEach(tech => {
             if (tech.minYear && this.currentYear < tech.minYear) return;
-            securityDiv.appendChild(this.createTechButton('security', tech));
+            if (securityDiv) securityDiv.appendChild(this.createTechButton('security', tech));
         });
 
         this.technologies.profit.forEach(tech => {
             if (tech.minYear && this.currentYear < tech.minYear) return;
-            profitDiv.appendChild(this.createTechButton('profit', tech));
+            if (profitDiv) profitDiv.appendChild(this.createTechButton('profit', tech));
+        });
+
+        this.technologies.customer.forEach(tech => {
+            if (tech.minYear && this.currentYear < tech.minYear) return;
+            if (customerDiv) customerDiv.appendChild(this.createTechButton('customer', tech));
+        });
+
+        this.technologies.efficiency.forEach(tech => {
+            if (tech.minYear && this.currentYear < tech.minYear) return;
+            if (efficiencyDiv) efficiencyDiv.appendChild(this.createTechButton('efficiency', tech));
         });
     }
 
@@ -526,6 +1023,7 @@ class BankGame {
 
         div.innerHTML = `
             <div class="tech-name">${tech.name}</div>
+            <div class="tech-desc">${tech.desc || ''}</div>
             <div class="tech-level">Level: ${tech.level}/${tech.maxLevel}</div>
             <div class="tech-cost">Cost: $${cost}</div>
             <button
@@ -559,6 +1057,9 @@ class BankGame {
         this.technologies.security.forEach(tech => {
             protection += tech.level * tech.protection;
         });
+        // Add guard bonuses
+        const staffBonuses = this.getStaffBonuses();
+        protection += staffBonuses.securityBonus;
         return protection;
     }
 
@@ -592,9 +1093,10 @@ class BankGame {
             }
         }
 
-        // Trust recovery
+        // Trust recovery (boosted by customer service tech)
         if (this.customerTrust < 100) {
-            this.customerTrust = Math.min(100, this.customerTrust + 1);
+            const recovery = this.getTrustRecoveryBonus();
+            this.customerTrust = Math.min(100, this.customerTrust + recovery);
         }
     }
 
@@ -656,6 +1158,135 @@ class BankGame {
 
         document.getElementById('portfolioDisplay').innerHTML =
             portfolio.length > 0 ? portfolio.join('<br>') : 'No investments yet';
+
+        // Update objectives display
+        this.updateObjectivesDisplay();
+
+        // Update loan display
+        this.updateLoanDisplay();
+
+        // Update staff display
+        this.updateStaffDisplay();
+
+        // Update total wages display
+        const wagesElem = document.getElementById('totalWages');
+        if (wagesElem) {
+            wagesElem.textContent = this.getStaffWages();
+        }
+    }
+
+    // Objectives System
+    checkObjectives() {
+        this.objectives.forEach(obj => {
+            if (obj.completed) return;
+
+            let progress = 0;
+            let complete = false;
+
+            switch (obj.type) {
+                case 'cash':
+                    progress = this.cashReserves;
+                    complete = this.cashReserves >= obj.target;
+                    break;
+                case 'year':
+                    progress = this.currentYear;
+                    complete = this.currentYear >= obj.target;
+                    break;
+                case 'profit':
+                    progress = this.totalProfit;
+                    complete = this.totalProfit >= obj.target;
+                    break;
+                case 'accounts':
+                    progress = this.activeAccounts;
+                    complete = this.activeAccounts >= obj.target;
+                    break;
+                case 'trust':
+                    if (this.customerTrust >= 100) {
+                        obj.counter = (obj.counter || 0) + 1;
+                    } else {
+                        obj.counter = 0;
+                    }
+                    progress = obj.counter;
+                    complete = obj.counter >= obj.target;
+                    break;
+                case 'security':
+                    const securityMaxed = this.technologies.security.every(t => t.level >= t.maxLevel);
+                    complete = securityMaxed;
+                    break;
+                case 'profit_tech':
+                    const profitMaxed = this.technologies.profit.every(t => t.level >= t.maxLevel);
+                    complete = profitMaxed;
+                    break;
+            }
+
+            if (complete) {
+                obj.completed = true;
+                this.cashReserves += obj.reward;
+                this.addEvent(`🎯 Objective Complete: ${obj.name}! Reward: $${obj.reward}`, 'success');
+            }
+        });
+    }
+
+    updateObjectivesDisplay() {
+        const container = document.getElementById('objectivesList');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Show only incomplete objectives (first 5) and recently completed (last 3)
+        const incomplete = this.objectives.filter(o => !o.completed).slice(0, 5);
+        const completed = this.objectives.filter(o => o.completed).slice(-3);
+
+        [...incomplete, ...completed].forEach(obj => {
+            const div = document.createElement('div');
+            div.className = obj.completed ? 'objective completed' : 'objective';
+
+            let progress = 0;
+            switch (obj.type) {
+                case 'cash': progress = this.cashReserves; break;
+                case 'year': progress = this.currentYear; break;
+                case 'profit': progress = this.totalProfit; break;
+                case 'accounts': progress = this.activeAccounts; break;
+                case 'trust': progress = obj.counter || 0; break;
+                case 'security':
+                case 'profit_tech': progress = obj.completed ? 1 : 0; break;
+            }
+
+            const percentage = Math.min(100, (progress / obj.target) * 100);
+
+            div.innerHTML = `
+                <div class="objective-name">${obj.completed ? '✓' : '○'} ${obj.name}</div>
+                <div class="objective-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="objective-reward">Reward: $${obj.reward}</div>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+
+    getCustomerBonus() {
+        let bonus = 0;
+        this.technologies.customer.forEach(tech => {
+            bonus += tech.level * tech.benefit;
+        });
+        // Add staff bonuses
+        const staffBonuses = this.getStaffBonuses();
+        bonus += staffBonuses.customerBonus;
+        return bonus;
+    }
+
+    getTrustRecoveryBonus() {
+        let bonus = 1; // Base recovery
+        this.technologies.customer.forEach(tech => {
+            if (tech.id === 'service') {
+                bonus += tech.level * (tech.benefit / 100); // Convert to multiplier
+            }
+        });
+        return bonus;
     }
 }
 

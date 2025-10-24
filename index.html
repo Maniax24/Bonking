@@ -55,6 +55,20 @@
                 </div>
             </div>
 
+            <!-- Loan Requests Panel -->
+            <div class="panel loans-panel">
+                <h2>💳 Loan Requests</h2>
+                <div id="loanQueue">
+                    <p class="hint">Customers seeking loans will appear here...</p>
+                </div>
+                <div class="active-loans">
+                    <h3>Active Loans</h3>
+                    <div id="activeLoansList">
+                        <div class="no-loans">No active loans</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Investments Panel -->
             <div class="panel investments-panel">
                 <h2>📈 Investments</h2>
@@ -87,17 +101,33 @@
                 </div>
             </div>
 
+            <!-- Objectives Panel -->
+            <div class="panel objectives-panel">
+                <h2>🎯 Objectives</h2>
+                <div id="objectivesList" class="objectives-list">
+                    <!-- Objectives will be populated by JavaScript -->
+                </div>
+            </div>
+
             <!-- Technology Research Panel -->
             <div class="panel tech-panel">
                 <h2>🔬 Technology Research</h2>
                 <div class="tech-tree">
                     <div class="tech-category">
-                        <h3>Security Technologies</h3>
+                        <h3>🛡️ Security</h3>
                         <div id="securityTech"></div>
                     </div>
                     <div class="tech-category">
-                        <h3>Profit Enhancement</h3>
+                        <h3>💰 Profit Enhancement</h3>
                         <div id="profitTech"></div>
+                    </div>
+                    <div class="tech-category">
+                        <h3>👥 Customer Relations</h3>
+                        <div id="customerTech"></div>
+                    </div>
+                    <div class="tech-category">
+                        <h3>⚙️ Efficiency</h3>
+                        <div id="efficiencyTech"></div>
                     </div>
                 </div>
             </div>
@@ -114,8 +144,17 @@
             <div class="panel controls-panel">
                 <h2>⏱️ Game Controls</h2>
                 <div class="time-controls">
-                    <button onclick="game.advanceTime()">Advance 1 Month</button>
-                    <button onclick="game.toggleAutoPause()" id="autoBtn">Auto: OFF</button>
+                    <button onclick="game.toggleAutoPause()" id="autoBtn" class="active">Pause</button>
+                    <button onclick="game.advanceTime()">⏩ Skip Month</button>
+                </div>
+                <div class="speed-controls">
+                    <label>Speed:</label>
+                    <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
+                    <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
+                    <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
+                </div>
+                <div class="auto-approve-control">
+                    <button onclick="game.toggleAutoApprove()" id="autoApproveBtn" class="active">Auto-Approve: ON</button>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>
@@ -146,6 +185,17 @@
                 </div>
                 <div class="auto-save-notice">
                     ⚡ Auto-saves every year
+                </div>
+            </div>
+
+            <!-- Staff Management Panel -->
+            <div class="panel staff-panel">
+                <h2>👔 Staff Management</h2>
+                <div id="staffList" class="staff-list">
+                    <!-- Staff will be populated by JavaScript -->
+                </div>
+                <div class="wage-info">
+                    <strong>Monthly Wages:</strong> $<span id="totalWages">0</span>
                 </div>
             </div>
         </div>

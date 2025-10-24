@@ -235,6 +235,189 @@ header h1 {
     margin-top: 10px;
 }
 
+/* Loan System */
+.loan-request {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.loan-request.risk-low {
+    border-left: 3px solid var(--text-success);
+}
+
+.loan-request.risk-medium {
+    border-left: 3px solid var(--text-warning);
+}
+
+.loan-request.risk-high {
+    border-left: 3px solid var(--text-danger);
+}
+
+.loan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.loan-purpose {
+    font-weight: bold;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.loan-risk {
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    background: var(--primary-bg);
+    border-radius: 3px;
+}
+
+.loan-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.loan-details div {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.loan-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.loan-actions button {
+    flex: 1;
+}
+
+.active-loans {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.active-loans h3 {
+    margin-top: 0;
+}
+
+.active-loan {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.active-loan.risk-low {
+    border-left: 3px solid var(--text-success);
+}
+
+.active-loan.risk-medium {
+    border-left: 3px solid var(--text-warning);
+}
+
+.active-loan.risk-high {
+    border-left: 3px solid var(--text-danger);
+}
+
+.loan-title {
+    color: var(--text-primary);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.loan-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.loan-progress-fill {
+    height: 100%;
+    background: var(--text-success);
+    transition: width 0.3s ease;
+}
+
+.loan-info {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.no-loans {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
+/* Objectives Panel */
+.objectives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.objective {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+}
+
+.objective.completed {
+    border-color: var(--text-success);
+    opacity: 0.7;
+}
+
+.objective-name {
+    color: var(--text-primary);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.objective.completed .objective-name {
+    color: var(--text-success);
+}
+
+.objective-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--text-success);
+    transition: width 0.3s ease;
+}
+
+.objective-reward {
+    color: var(--text-warning);
+    font-size: 0.85rem;
+    text-align: right;
+}
+
 /* Technology Panel */
 .tech-tree {
     display: flex;
@@ -256,6 +439,13 @@ header h1 {
 .tech-name {
     font-weight: bold;
     color: var(--text-primary);
+    margin-bottom: 3px;
+}
+
+.tech-desc {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-style: italic;
     margin-bottom: 5px;
 }
 
@@ -331,6 +521,42 @@ header h1 {
 
 .time-controls button {
     flex: 1;
+}
+
+.speed-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.speed-controls label {
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.speed-controls .speed-btn {
+    flex: 1;
+    padding: 8px;
+}
+
+.speed-controls .speed-btn.active {
+    background: var(--btn-hover);
+    border-color: var(--text-success);
+    color: var(--text-success);
+}
+
+.auto-approve-control {
+    margin-bottom: 15px;
+}
+
+.auto-approve-control button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
 }
 
 .game-date {
@@ -531,6 +757,112 @@ button.active {
     border-top: 1px solid var(--border-color);
 }
 
+/* Staff Management */
+.staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.staff-item {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+}
+
+.staff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.staff-name {
+    font-weight: bold;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.staff-count {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 3px 8px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.staff-info {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+.staff-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.staff-actions button {
+    flex: 1;
+}
+
+.fire-btn {
+    background: #4a2a2a;
+    border-color: var(--text-danger);
+    color: var(--text-danger);
+}
+
+.fire-btn:hover:not(:disabled) {
+    background: #6a3a3a;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.bank-upgrade {
+    background: var(--secondary-bg);
+    border: 2px solid var(--text-warning);
+    padding: 15px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.bank-upgrade h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-warning);
+}
+
+.bank-upgrade button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    background: #4a3a2a;
+    border-color: var(--text-warning);
+    color: var(--text-warning);
+}
+
+.bank-upgrade button:hover:not(:disabled) {
+    background: #6a5a3a;
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.wage-info {
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.wage-info strong {
+    color: var(--text-primary);
+}
+
+.wage-info span {
+    color: var(--text-warning);
+    font-size: 1.1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .game-grid {
@@ -543,6 +875,15 @@ button.active {
 
     .time-controls {
         flex-direction: column;
+    }
+
+    .speed-controls {
+        flex-wrap: wrap;
+    }
+
+    .speed-controls label {
+        width: 100%;
+        margin-bottom: 5px;
     }
 
     .save-controls {
