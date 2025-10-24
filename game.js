@@ -225,6 +225,9 @@ class BankGame {
         this.showEconomy = false;
         this.showBranches = false;
         this.showProducts = false;
+        this.showMarketing = false;
+        this.showCompliance = false;
+        this.showInsurance = false;
 
         // Random Events System
         this.activeEvent = null; // Currently displayed event
@@ -282,6 +285,63 @@ class BankGame {
             onlineBanking: { unlocked: false, minYear: 1995, profitMargin: 0.01, customers: 0 },
             mobileBanking: { unlocked: false, minYear: 2007, profitMargin: 0.015, customers: 0 },
             cryptocurrency: { unlocked: false, minYear: 2015, profitMargin: 0.20, customers: 0 }
+        };
+
+        // Marketing & Advertising System
+        this.marketing = {
+            activeCampaigns: [], // Running campaigns
+            brandRecognition: 0, // 0-100, builds over time
+            lastCampaignMonth: 0,
+            campaigns: {
+                radio: { name: 'Radio Ads', cost: 500, duration: 3, effectiveness: 1.2, minYear: 1920, customerBonus: 10 },
+                newspaper: { name: 'Newspaper Ads', cost: 300, duration: 2, effectiveness: 1.0, minYear: 1920, customerBonus: 5 },
+                tv: { name: 'TV Commercials', cost: 2000, duration: 6, effectiveness: 2.0, minYear: 1950, customerBonus: 30 },
+                billboard: { name: 'Billboards', cost: 800, duration: 12, effectiveness: 1.5, minYear: 1960, customerBonus: 15 },
+                internet: { name: 'Online Ads', cost: 1500, duration: 3, effectiveness: 2.5, minYear: 1995, customerBonus: 40 },
+                social: { name: 'Social Media', cost: 1000, duration: 1, effectiveness: 3.0, minYear: 2010, customerBonus: 50 }
+            }
+        };
+
+        // Regulatory Compliance System
+        this.compliance = {
+            level: 100, // 0-100, falls if you cut corners
+            capitalRequirement: 0.08, // 8% of assets must be capital
+            reserveRequirement: 0.10, // 10% of deposits must be reserves
+            lastStressTest: 0,
+            stressTestInterval: 24, // Every 2 years after 1933
+            violations: [],
+            fines: 0,
+            underInvestigation: false
+        };
+
+        // Insurance & Hedging System
+        this.insurance = {
+            fdic: {
+                enrolled: false,
+                availableYear: 1933,
+                monthlyCost: 0, // 0.1% of insured deposits
+                coverage: 250000 // Per account
+            },
+            hedging: {
+                creditDefaultSwaps: {
+                    active: false,
+                    coverage: 0, // Amount covered
+                    monthlyCost: 0, // Cost per month
+                    availableYear: 1990
+                },
+                interestRateSwaps: {
+                    active: false,
+                    notionalAmount: 0,
+                    monthlyCost: 0,
+                    availableYear: 1980
+                }
+            },
+            businessInterruption: {
+                active: false,
+                monthlyCost: 200,
+                coverage: 10000,
+                availableYear: 1950
+            }
         };
 
         // Objectives & Achievements System
@@ -523,6 +583,210 @@ class BankGame {
         if (this.products.mortgages.unlocked) this.products.mortgages.customers += Math.floor(vipCustomers * 0.5);
     }
 
+    // Marketing & Advertising System
+    processMarketing() {
+        // Update active campaigns
+        this.marketing.activeCampaigns = this.marketing.activeCampaigns.filter(campaign => {
+            campaign.monthsRemaining--;
+            if (campaign.monthsRemaining > 0) {
+                return true; // Keep campaign
+            } else {
+                this.addEvent(`📢 Marketing campaign "${campaign.name}" ended`, 'info');
+                return false; // Remove campaign
+            }
+        });
+
+        // Build brand recognition over time
+        if (this.marketing.activeCampaigns.length > 0) {
+            const recognitionGain = this.marketing.activeCampaigns.reduce((sum, c) => sum + (c.effectiveness * 0.5), 0);
+            this.marketing.brandRecognition = Math.min(100, this.marketing.brandRecognition + recognitionGain);
+        } else {
+            this.marketing.brandRecognition = Math.max(0, this.marketing.brandRecognition - 0.5);
+        }
+    }
+
+    launchMarketingCampaign(campaignType) {
+        const campaign = this.marketing.campaigns[campaignType];
+        if (!campaign) return false;
+
+        if (this.currentYear < campaign.minYear) {
+            this.addEvent(`${campaign.name} not available until ${campaign.minYear}`, 'warning');
+            return false;
+        }
+
+        if (this.cashReserves < campaign.cost) {
+            this.addEvent(`Need $${campaign.cost} for ${campaign.name}`, 'danger');
+            return false;
+        }
+
+        if (this.marketing.activeCampaigns.some(c => c.type === campaignType)) {
+            this.addEvent(`Already running ${campaign.name}`, 'warning');
+            return false;
+        }
+
+        this.cashReserves -= campaign.cost;
+        this.marketing.activeCampaigns.push({
+            type: campaignType,
+            name: campaign.name,
+            monthsRemaining: campaign.duration,
+            effectiveness: campaign.effectiveness,
+            customerBonus: campaign.customerBonus
+        });
+
+        this.addEvent(`🎯 Launched ${campaign.name} ($${campaign.cost}, ${campaign.duration} months)`, 'success');
+        return true;
+    }
+
+    getMarketingCustomerBonus() {
+        let bonus = 0;
+        this.marketing.activeCampaigns.forEach(c => bonus += c.customerBonus);
+        bonus += (this.marketing.brandRecognition / 100) * 20;
+        return bonus;
+    }
+
+    // Regulatory Compliance System
+    processCompliance() {
+        if (this.currentYear < 1933) return;
+
+        const totalAssets = this.cashReserves + this.investments.bonds +
+                           this.investments.stocks + this.investments.speculative;
+        const equity = totalAssets - this.customerDeposits;
+        const capitalRatio = totalAssets > 0 ? equity / totalAssets : 0;
+        const reserveRatio = this.customerDeposits > 0 ?
+                            this.cashReserves / this.customerDeposits : 1;
+
+        let violation = null;
+
+        if (capitalRatio < this.compliance.capitalRequirement) {
+            violation = {
+                type: 'capital',
+                message: `Capital ratio ${(capitalRatio * 100).toFixed(1)}% below ${(this.compliance.capitalRequirement * 100).toFixed(1)}%`,
+                fine: Math.floor(totalAssets * 0.02)
+            };
+        } else if (reserveRatio < this.compliance.reserveRequirement) {
+            violation = {
+                type: 'reserves',
+                message: `Reserve ratio ${(reserveRatio * 100).toFixed(1)}% below ${(this.compliance.reserveRequirement * 100).toFixed(1)}%`,
+                fine: Math.floor(this.customerDeposits * 0.01)
+            };
+        }
+
+        if (violation) {
+            this.compliance.level = Math.max(0, this.compliance.level - 10);
+            this.compliance.violations.push({...violation, month: this.currentMonth, year: this.currentYear});
+            if (this.compliance.level < 30) this.compliance.underInvestigation = true;
+
+            this.cashReserves -= violation.fine;
+            this.compliance.fines += violation.fine;
+            this.trackExpense('regulatoryFines', violation.fine);
+            this.addEvent(`⚖️ COMPLIANCE: ${violation.message}. Fine $${violation.fine}!`, 'danger');
+        } else {
+            this.compliance.level = Math.min(100, this.compliance.level + 2);
+            if (this.compliance.level > 70 && this.compliance.underInvestigation) {
+                this.compliance.underInvestigation = false;
+                this.addEvent(`✓ Investigation closed`, 'success');
+            }
+        }
+
+        // Stress tests every 2 years
+        const monthsSinceTest = (this.currentYear * 12 + this.currentMonth) - this.compliance.lastStressTest;
+        if (this.currentYear >= 1933 && monthsSinceTest >= this.compliance.stressTestInterval) {
+            this.conductStressTest();
+        }
+    }
+
+    conductStressTest() {
+        this.compliance.lastStressTest = this.currentYear * 12 + this.currentMonth;
+        const withdrawalStress = this.customerDeposits * 0.3;
+        const defaultStress = this.loans.reduce((sum, loan) => sum + loan.principalRemaining, 0) * 0.2;
+        const totalStress = withdrawalStress + defaultStress;
+        const canSurvive = this.cashReserves >= totalStress;
+
+        if (canSurvive) {
+            this.compliance.level = Math.min(100, this.compliance.level + 15);
+            this.customerTrust = Math.min(100, this.customerTrust + 10);
+            this.addEvent(`✓ STRESS TEST PASSED! Trust +10, Compliance +15`, 'success');
+        } else {
+            this.compliance.level = Math.max(0, this.compliance.level - 25);
+            this.customerTrust = Math.max(0, this.customerTrust - 15);
+            const fine = Math.floor((totalStress - this.cashReserves) * 0.1);
+            this.cashReserves -= fine;
+            this.compliance.fines += fine;
+            this.trackExpense('stressTestFine', fine);
+            this.addEvent(`✗ STRESS TEST FAILED! Trust -15, Fine $${fine}`, 'danger');
+        }
+    }
+
+    // Insurance & Hedging System
+    processInsurance() {
+        let totalCost = 0;
+
+        if (this.insurance.fdic.enrolled) {
+            const cost = Math.floor(this.customerDeposits * 0.001);
+            this.insurance.fdic.monthlyCost = cost;
+            totalCost += cost;
+        }
+
+        if (this.insurance.hedging.creditDefaultSwaps.active) {
+            totalCost += this.insurance.hedging.creditDefaultSwaps.monthlyCost;
+        }
+
+        if (this.insurance.hedging.interestRateSwaps.active) {
+            totalCost += this.insurance.hedging.interestRateSwaps.monthlyCost;
+        }
+
+        if (this.insurance.businessInterruption.active) {
+            totalCost += this.insurance.businessInterruption.monthlyCost;
+        }
+
+        if (totalCost > 0) {
+            this.cashReserves -= totalCost;
+            this.trackExpense('insurance', totalCost);
+        }
+    }
+
+    toggleFDIC() {
+        if (this.currentYear < this.insurance.fdic.availableYear) {
+            this.addEvent(`FDIC not available until ${this.insurance.fdic.availableYear}`, 'warning');
+            return false;
+        }
+        this.insurance.fdic.enrolled = !this.insurance.fdic.enrolled;
+        this.addEvent(this.insurance.fdic.enrolled ?
+            `✓ FDIC enrolled. Deposits insured to $${this.insurance.fdic.coverage.toLocaleString()}` :
+            `✗ FDIC cancelled`, this.insurance.fdic.enrolled ? 'success' : 'warning');
+        return true;
+    }
+
+    purchaseCreditDefaultSwaps(coverage) {
+        if (this.currentYear < 1990) {
+            this.addEvent(`CDS not available until 1990`, 'warning');
+            return false;
+        }
+        const monthlyCost = Math.floor(coverage * 0.005);
+        if (this.cashReserves < monthlyCost * 3) {
+            this.addEvent(`Need $${monthlyCost * 3} (3 months prepaid)`, 'danger');
+            return false;
+        }
+        this.cashReserves -= monthlyCost * 3;
+        this.insurance.hedging.creditDefaultSwaps.active = true;
+        this.insurance.hedging.creditDefaultSwaps.coverage = coverage;
+        this.insurance.hedging.creditDefaultSwaps.monthlyCost = monthlyCost;
+        this.addEvent(`✓ CDS active. $${coverage.toLocaleString()} coverage, $${monthlyCost}/mo`, 'success');
+        return true;
+    }
+
+    toggleBusinessInterruption() {
+        if (this.currentYear < 1950) {
+            this.addEvent(`Business Insurance not available until 1950`, 'warning');
+            return false;
+        }
+        this.insurance.businessInterruption.active = !this.insurance.businessInterruption.active;
+        this.addEvent(this.insurance.businessInterruption.active ?
+            `✓ Business Insurance active. $${this.insurance.businessInterruption.monthlyCost}/mo` :
+            `✗ Business Insurance cancelled`, this.insurance.businessInterruption.active ? 'success' : 'warning');
+        return true;
+    }
+
     // Save/Load System
     saveGame() {
         const saveData = {
@@ -756,6 +1020,9 @@ class BankGame {
             this.unlockProducts(); // Check for new product unlocks
             this.assignCustomersToProducts(); // Assign customers to products
             this.processProductRevenue(); // Generate product income
+            this.processMarketing(); // Handle marketing campaigns
+            this.processCompliance(); // Check regulatory compliance
+            this.processInsurance(); // Handle insurance costs and coverage
             this.calculateMonthlyPnL(); // Calculate and record monthly P&L
             this.processRandomEvent(); // Trigger random events
             this.checkObjectives();
@@ -2939,6 +3206,8 @@ class BankGame {
         // Add staff bonuses
         const staffBonuses = this.getStaffBonuses();
         bonus += staffBonuses.customerBonus;
+        // Add marketing bonuses
+        bonus += this.getMarketingCustomerBonus();
         return bonus;
     }
 
