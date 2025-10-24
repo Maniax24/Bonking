@@ -417,6 +417,21 @@ class BankGame {
             // Can only withdraw if there are deposits
             if (this.customerDeposits <= 0) return;
             amount = Math.floor(Math.random() * Math.min(300, this.customerDeposits));
+
+            // Auto-approve small withdrawals if we have plenty of cash
+            // Only show withdrawal requests if:
+            // 1. Amount is large (>$200) OR
+            // 2. Would bring reserves below 30% of deposits
+            const reserveRatioAfter = ((this.cashReserves - amount) / this.customerDeposits) * 100;
+            const isSmallWithdrawal = amount <= 200;
+            const hasGoodReserves = reserveRatioAfter >= 30;
+
+            if (isSmallWithdrawal && hasGoodReserves && this.cashReserves >= amount) {
+                // Auto-approve small, safe withdrawals
+                this.cashReserves -= amount;
+                this.customerDeposits -= amount;
+                return; // Don't display, just process
+            }
         }
 
         const customer = {
