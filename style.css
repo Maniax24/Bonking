@@ -235,6 +235,135 @@ header h1 {
     margin-top: 10px;
 }
 
+/* Loan System */
+.loan-request {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.loan-request.risk-low {
+    border-left: 3px solid var(--text-success);
+}
+
+.loan-request.risk-medium {
+    border-left: 3px solid var(--text-warning);
+}
+
+.loan-request.risk-high {
+    border-left: 3px solid var(--text-danger);
+}
+
+.loan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.loan-purpose {
+    font-weight: bold;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.loan-risk {
+    font-size: 0.85rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    background: var(--primary-bg);
+    border-radius: 3px;
+}
+
+.loan-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.loan-details div {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.loan-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.loan-actions button {
+    flex: 1;
+}
+
+.active-loans {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.active-loans h3 {
+    margin-top: 0;
+}
+
+.active-loan {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.active-loan.risk-low {
+    border-left: 3px solid var(--text-success);
+}
+
+.active-loan.risk-medium {
+    border-left: 3px solid var(--text-warning);
+}
+
+.active-loan.risk-high {
+    border-left: 3px solid var(--text-danger);
+}
+
+.loan-title {
+    color: var(--text-primary);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.loan-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.loan-progress-fill {
+    height: 100%;
+    background: var(--text-success);
+    transition: width 0.3s ease;
+}
+
+.loan-info {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.no-loans {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
 /* Objectives Panel */
 .objectives-list {
     display: flex;

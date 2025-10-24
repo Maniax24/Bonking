@@ -18,6 +18,13 @@ class BankGame {
         this.customerQueue = [];
         this.autoApproveDeposits = true; // Auto-approve deposits by default
 
+        // Loan System
+        this.loans = []; // Active loans
+        this.loanQueue = []; // Pending loan requests
+        this.totalLoansIssued = 0;
+        this.totalLoanDefaults = 0;
+        this.loanIdCounter = 0;
+
         // Time and Era
         this.currentYear = 1920;
         this.currentMonth = 1;
@@ -307,7 +314,16 @@ class BankGame {
             this.generateCustomer();
         }
 
+        // Generate loan requests (1-2 per month, 30% chance)
+        if (Math.random() < 0.3) {
+            const loanCount = Math.floor(Math.random() * 2) + 1;
+            for (let i = 0; i < loanCount; i++) {
+                this.generateLoanRequest();
+            }
+        }
+
         // Process monthly events
+        this.processLoans();
         this.processInvestments();
         this.processCustomerEvents();
         this.processThiefEvents();
@@ -471,6 +487,207 @@ class BankGame {
         this.customerQueue.splice(customerIndex, 1);
         if (customerDiv) customerDiv.remove();
         this.updateDisplay();
+    }
+
+    // Loan System
+    generateLoanRequest() {
+        // Loan purposes with different risk profiles
+        const loanTypes = [
+            { purpose: 'Home Purchase', risk: 'low', baseAmount: 5000, interestRate: 0.05 },
+            { purpose: 'Business Startup', risk: 'high', baseAmount: 3000, interestRate: 0.12 },
+            { purpose: 'Education', risk: 'low', baseAmount: 2000, interestRate: 0.04 },
+            { purpose: 'Car Purchase', risk: 'medium', baseAmount: 1500, interestRate: 0.07 },
+            { purpose: 'Home Renovation', risk: 'medium', baseAmount: 2500, interestRate: 0.06 },
+            { purpose: 'Business Expansion', risk: 'medium', baseAmount: 4000, interestRate: 0.08 },
+            { purpose: 'Debt Consolidation', risk: 'high', baseAmount: 3500, interestRate: 0.10 },
+            { purpose: 'Medical Expenses', risk: 'medium', baseAmount: 1000, interestRate: 0.07 },
+            { purpose: 'Speculative Investment', risk: 'high', baseAmount: 2000, interestRate: 0.15 }
+        ];
+
+        const loanType = loanTypes[Math.floor(Math.random() * loanTypes.length)];
+        const amount = Math.floor(loanType.baseAmount * (0.7 + Math.random() * 0.6)); // ±30% variance
+        const termMonths = [12, 24, 36, 48, 60][Math.floor(Math.random() * 5)];
+
+        // Calculate default probability based on risk
+        let defaultProbability;
+        switch (loanType.risk) {
+            case 'low': defaultProbability = 0.02; break; // 2% chance per year
+            case 'medium': defaultProbability = 0.05; break; // 5% chance per year
+            case 'high': defaultProbability = 0.10; break; // 10% chance per year
+        }
+
+        const loanRequest = {
+            id: this.loanIdCounter++,
+            purpose: loanType.purpose,
+            amount: amount,
+            interestRate: loanType.interestRate,
+            termMonths: termMonths,
+            risk: loanType.risk,
+            defaultProbability: defaultProbability / 12, // Convert to monthly
+            requestDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+        };
+
+        this.loanQueue.push(loanRequest);
+        this.displayLoanRequest(loanRequest);
+    }
+
+    displayLoanRequest(loan) {
+        const queueDiv = document.getElementById('loanQueue');
+        if (!queueDiv) return;
+
+        const loanDiv = document.createElement('div');
+        loanDiv.className = `loan-request risk-${loan.risk}`;
+        loanDiv.id = `loan-${loan.id}`;
+
+        const monthlyPayment = this.calculateLoanPayment(loan.amount, loan.interestRate, loan.termMonths);
+        const totalRepayment = monthlyPayment * loan.termMonths;
+        const totalInterest = totalRepayment - loan.amount;
+
+        const riskColor = { low: '#44ff44', medium: '#ffaa00', high: '#ff4444' };
+
+        loanDiv.innerHTML = `
+            <div class="loan-header">
+                <span class="loan-purpose">${loan.purpose}</span>
+                <span class="loan-risk" style="color: ${riskColor[loan.risk]}">${loan.risk.toUpperCase()} RISK</span>
+            </div>
+            <div class="loan-details">
+                <div>Amount: $${loan.amount}</div>
+                <div>Interest: ${(loan.interestRate * 100).toFixed(1)}% APR</div>
+                <div>Term: ${loan.termMonths} months</div>
+                <div>Monthly Payment: $${Math.floor(monthlyPayment)}</div>
+                <div>Total Interest: $${Math.floor(totalInterest)}</div>
+            </div>
+            <div class="loan-actions">
+                <button onclick="game.handleLoan(${loan.id}, true)" class="approve-btn">✓ Approve Loan</button>
+                <button onclick="game.handleLoan(${loan.id}, false)" class="deny-btn">✗ Deny</button>
+            </div>
+        `;
+
+        queueDiv.appendChild(loanDiv);
+
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            const elem = document.getElementById(`loan-${loan.id}`);
+            if (elem) {
+                this.handleLoan(loan.id, false);
+            }
+        }, 10000);
+    }
+
+    calculateLoanPayment(principal, annualRate, months) {
+        const monthlyRate = annualRate / 12;
+        if (monthlyRate === 0) return principal / months;
+        return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) /
+               (Math.pow(1 + monthlyRate, months) - 1);
+    }
+
+    handleLoan(loanId, approve) {
+        const loanIndex = this.loanQueue.findIndex(l => l.id === loanId);
+        if (loanIndex === -1) return;
+
+        const loan = this.loanQueue[loanIndex];
+        const loanDiv = document.getElementById(`loan-${loanId}`);
+
+        if (approve) {
+            if (this.cashReserves < loan.amount) {
+                this.addEvent(`Cannot approve loan: insufficient cash reserves`, 'danger');
+                this.customerTrust = Math.max(0, this.customerTrust - 3);
+            } else {
+                // Issue the loan
+                this.cashReserves -= loan.amount;
+                const monthlyPayment = this.calculateLoanPayment(loan.amount, loan.interestRate, loan.termMonths);
+
+                const activeLoan = {
+                    ...loan,
+                    monthlyPayment: monthlyPayment,
+                    remainingPayments: loan.termMonths,
+                    principalRemaining: loan.amount,
+                    totalPaid: 0,
+                    issueDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+                };
+
+                this.loans.push(activeLoan);
+                this.totalLoansIssued++;
+                this.customerTrust = Math.min(100, this.customerTrust + 2);
+                this.addEvent(`✓ Approved ${loan.purpose} loan: $${loan.amount} @ ${(loan.interestRate * 100).toFixed(1)}%`, 'success');
+            }
+        } else {
+            this.addEvent(`Denied loan request for ${loan.purpose}`, 'info');
+        }
+
+        this.loanQueue.splice(loanIndex, 1);
+        if (loanDiv) loanDiv.remove();
+        this.updateDisplay();
+    }
+
+    processLoans() {
+        const loansToRemove = [];
+
+        this.loans.forEach((loan, index) => {
+            // Check for default
+            if (Math.random() < loan.defaultProbability) {
+                // Loan defaults!
+                this.totalLoanDefaults++;
+                this.customerTrust = Math.max(0, this.customerTrust - 5);
+                this.addEvent(`💥 LOAN DEFAULT: ${loan.purpose} ($${Math.floor(loan.principalRemaining)} lost)`, 'danger');
+                loansToRemove.push(index);
+                return;
+            }
+
+            // Process monthly payment
+            this.cashReserves += loan.monthlyPayment;
+            loan.totalPaid += loan.monthlyPayment;
+            loan.remainingPayments--;
+
+            const interestPortion = (loan.principalRemaining * loan.interestRate / 12);
+            const principalPortion = loan.monthlyPayment - interestPortion;
+            loan.principalRemaining -= principalPortion;
+
+            this.totalProfit += interestPortion;
+
+            // Check if loan is paid off
+            if (loan.remainingPayments <= 0) {
+                const totalInterest = loan.totalPaid - loan.amount;
+                this.addEvent(`✓ Loan paid off: ${loan.purpose} (+$${Math.floor(totalInterest)} interest)`, 'success');
+                loansToRemove.push(index);
+            }
+        });
+
+        // Remove completed/defaulted loans (reverse order to maintain indices)
+        loansToRemove.reverse().forEach(index => {
+            this.loans.splice(index, 1);
+        });
+    }
+
+    updateLoanDisplay() {
+        const container = document.getElementById('activeLoansList');
+        if (!container) return;
+
+        if (this.loans.length === 0) {
+            container.innerHTML = '<div class="no-loans">No active loans</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        this.loans.forEach(loan => {
+            const div = document.createElement('div');
+            div.className = `active-loan risk-${loan.risk}`;
+
+            const percentPaid = ((loan.termMonths - loan.remainingPayments) / loan.termMonths) * 100;
+
+            div.innerHTML = `
+                <div class="loan-title">${loan.purpose} - $${Math.floor(loan.principalRemaining)}</div>
+                <div class="loan-progress-bar">
+                    <div class="loan-progress-fill" style="width: ${percentPaid}%"></div>
+                </div>
+                <div class="loan-info">
+                    ${loan.remainingPayments} payments left | $${Math.floor(loan.monthlyPayment)}/mo
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
     }
 
     // Investment Management
@@ -754,6 +971,9 @@ class BankGame {
 
         // Update objectives display
         this.updateObjectivesDisplay();
+
+        // Update loan display
+        this.updateLoanDisplay();
     }
 
     // Objectives System
