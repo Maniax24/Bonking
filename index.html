@@ -269,13 +269,13 @@
 
                             <div class="slider-control">
                                 <label>Max Auto-Withdrawal Amount: <span id="maxWithdrawalDisplay">$200</span></label>
-                                <input type="range" id="maxWithdrawalAmount" min="0" max="500" step="50" value="200"
+                                <input type="range" id="maxWithdrawalAmount" min="0" max="10000" step="250" value="200"
                                     oninput="game.updateAutomationSetting('tellers', 'maxWithdrawalAmount', this.value); game.renderAutomationPanel()">
                             </div>
 
                             <div class="slider-control">
                                 <label>Min Reserve Ratio for Withdrawals: <span id="minReserveDisplay">30%</span></label>
-                                <input type="range" id="minReserveRatio" min="10" max="50" step="5" value="30"
+                                <input type="range" id="minReserveRatio" min="0" max="50" step="5" value="30"
                                     oninput="game.updateAutomationSetting('tellers', 'minReserveRatioForWithdrawals', this.value); game.renderAutomationPanel()">
                                 <div class="hint">Won't approve withdrawals if reserves drop below this %</div>
                             </div>
@@ -370,56 +370,202 @@
             </div>
 
             <!-- Statistics Panel -->
+            <!-- Comprehensive Statistics Panel -->
             <div class="panel statistics-panel" id="statisticsPanel" style="display: none;">
-                <h2>📊 Statistics & Analytics</h2>
+                <h2>📊 Comprehensive Financial Analytics</h2>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Customers Served</div>
-                        <div class="stat-value" id="statCustomersServed">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Deposits Processed</div>
-                        <div class="stat-value" id="statDepositsProcessed">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Withdrawals Processed</div>
-                        <div class="stat-value" id="statWithdrawalsProcessed">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Loans Issued</div>
-                        <div class="stat-value" id="statLoansIssued">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Loan Defaults</div>
-                        <div class="stat-value" id="statLoanDefaults">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Robberies Prevented</div>
-                        <div class="stat-value" id="statRobberiesPrevented">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Robberies Succeeded</div>
-                        <div class="stat-value" id="statRobberiesSucceeded">0</div>
+                <!-- Profit & Loss Statement -->
+                <div class="pnl-section">
+                    <h3>💰 Profit & Loss Statement</h3>
+
+                    <div class="pnl-comparison">
+                        <div class="pnl-column">
+                            <h4>Last 12 Months</h4>
+                            <div class="pnl-table">
+                                <div class="pnl-row pnl-header">
+                                    <span>REVENUE</span>
+                                    <span id="totalRevenueL12M">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Loan Interest</span>
+                                    <span id="revenueLoanInterest">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Investment Returns</span>
+                                    <span id="revenueInvestments">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Product Revenue</span>
+                                    <span id="revenueProducts">$0</span>
+                                </div>
+
+                                <div class="pnl-row pnl-header pnl-expense">
+                                    <span>EXPENSES</span>
+                                    <span id="totalExpensesL12M">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Deposit Interest</span>
+                                    <span id="expenseDepositInterest">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Staff Wages</span>
+                                    <span id="expenseWages">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-item">
+                                    <span>→ Loan Defaults</span>
+                                    <span id="expenseDefaults">$0</span>
+                                </div>
+
+                                <div class="pnl-row pnl-net">
+                                    <span>NET INCOME</span>
+                                    <span id="netIncomeL12M">$0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pnl-column">
+                            <h4>All Time</h4>
+                            <div class="pnl-table">
+                                <div class="pnl-row pnl-header">
+                                    <span>REVENUE</span>
+                                    <span id="totalRevenueAllTime">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-spacer"></div>
+                                <div class="pnl-row pnl-spacer"></div>
+                                <div class="pnl-row pnl-spacer"></div>
+
+                                <div class="pnl-row pnl-header pnl-expense">
+                                    <span>EXPENSES</span>
+                                    <span id="totalExpensesAllTime">$0</span>
+                                </div>
+                                <div class="pnl-row pnl-spacer"></div>
+                                <div class="pnl-row pnl-spacer"></div>
+                                <div class="pnl-row pnl-spacer"></div>
+
+                                <div class="pnl-row pnl-net">
+                                    <span>NET INCOME</span>
+                                    <span id="netIncomeAllTime">$0</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="charts-container">
-                    <div class="chart-wrapper">
-                        <h3>Cash Reserves Over Time</h3>
-                        <canvas id="cashChart" width="400" height="150"></canvas>
+                <!-- Financial Metrics -->
+                <div class="metrics-section">
+                    <h3>📈 Key Financial Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Return on Assets (ROA)</div>
+                            <div class="metric-value" id="metricROA">0%</div>
+                            <div class="metric-hint">Profit / Total Assets</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Return on Equity (ROE)</div>
+                            <div class="metric-value" id="metricROE">0%</div>
+                            <div class="metric-hint">Profit / Equity</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Net Interest Margin</div>
+                            <div class="metric-value" id="metricNIM">0%</div>
+                            <div class="metric-hint">(Interest Income - Interest Expense) / Assets</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Efficiency Ratio</div>
+                            <div class="metric-value" id="metricEfficiency">0%</div>
+                            <div class="metric-hint">Expenses / Revenue (Lower is better)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Revenue per Employee</div>
+                            <div class="metric-value" id="metricRevenuePerEmployee">$0</div>
+                            <div class="metric-hint">Annual Revenue / Total Staff</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Profit per Customer</div>
+                            <div class="metric-value" id="metricProfitPerCustomer">$0</div>
+                            <div class="metric-hint">Annual Profit / Active Accounts</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Average Deposit Size</div>
+                            <div class="metric-value" id="metricAvgDeposit">$0</div>
+                            <div class="metric-hint">Total Deposits / Accounts</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Average Loan Size</div>
+                            <div class="metric-value" id="metricAvgLoan">$0</div>
+                            <div class="metric-hint">Total Loan Value / Active Loans</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Loan Default Rate</div>
+                            <div class="metric-value" id="metricDefaultRate">0%</div>
+                            <div class="metric-hint">Defaults / Total Loans Issued</div>
+                        </div>
                     </div>
-                    <div class="chart-wrapper">
-                        <h3>Customer Deposits Over Time</h3>
-                        <canvas id="depositsChart" width="400" height="150"></canvas>
+                </div>
+
+                <!-- Operational Statistics -->
+                <div class="operational-section">
+                    <h3>📋 Operational Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Customers Served</div>
+                            <div class="stat-value" id="statCustomersServed">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Deposits Processed</div>
+                            <div class="stat-value" id="statDepositsProcessed">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Withdrawals Processed</div>
+                            <div class="stat-value" id="statWithdrawalsProcessed">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Loans Issued</div>
+                            <div class="stat-value" id="statLoansIssued">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Loan Defaults</div>
+                            <div class="stat-value" id="statLoanDefaults">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Robberies Prevented</div>
+                            <div class="stat-value" id="statRobberiesPrevented">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Robberies Succeeded</div>
+                            <div class="stat-value" id="statRobberiesSucceeded">0</div>
+                        </div>
                     </div>
-                    <div class="chart-wrapper">
-                        <h3>Total Profit Over Time</h3>
-                        <canvas id="profitChart" width="400" height="150"></canvas>
-                    </div>
-                    <div class="chart-wrapper">
-                        <h3>Active Accounts Over Time</h3>
-                        <canvas id="accountsChart" width="400" height="150"></canvas>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-section">
+                    <h3>📉 Historical Trends</h3>
+                    <div class="charts-container">
+                        <div class="chart-wrapper">
+                            <h4>Monthly Revenue</h4>
+                            <canvas id="revenueChart" width="400" height="150"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Monthly Expenses</h4>
+                            <canvas id="expensesChart" width="400" height="150"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Monthly Net Income</h4>
+                            <canvas id="profitChart" width="400" height="150"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Cash Reserves</h4>
+                            <canvas id="cashChart" width="400" height="150"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Customer Deposits</h4>
+                            <canvas id="depositsChart" width="400" height="150"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Active Accounts</h4>
+                            <canvas id="accountsChart" width="400" height="150"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>

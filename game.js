@@ -138,18 +138,86 @@ class BankGame {
 
         // Statistics Tracking
         this.statistics = {
-            history: {
-                cash: [],           // {month, year, value}
-                deposits: [],       // {month, year, value}
-                profit: [],         // {month, year, value}
-                accounts: []        // {month, year, value}
+            // Profit & Loss Tracking
+            currentMonth: {
+                revenue: {
+                    loanInterest: 0,
+                    investmentReturns: 0,
+                    productRevenue: 0,
+                    fees: 0,
+                    total: 0
+                },
+                expenses: {
+                    depositInterest: 0,
+                    staffWages: 0,
+                    loanDefaults: 0,
+                    robberyLosses: 0,
+                    techUpgrades: 0,
+                    operationalCosts: 0,
+                    total: 0
+                },
+                netIncome: 0
             },
+
+            // Historical P&L Data
+            history: {
+                monthly: {
+                    revenue: [],
+                    expenses: [],
+                    netIncome: [],
+                    loanInterestIncome: [],
+                    investmentReturns: [],
+                    productRevenue: [],
+                    depositInterestExpense: [],
+                    wageExpense: [],
+                    defaultExpense: [],
+                    timestamps: [] // {month, year}
+                },
+                cash: [],
+                deposits: [],
+                profit: [],
+                accounts: [],
+                marketShare: [],
+                customerTrust: [],
+                reserveRatio: []
+            },
+
+            // Operational Metrics
             totals: {
                 customersServed: 0,
                 depositsProcessed: 0,
                 withdrawalsProcessed: 0,
+                loansIssued: 0,
+                loanDefaults: 0,
                 robberiesPrevented: 0,
-                robberiesSucceeded: 0
+                robberiesSucceeded: 0,
+                totalRevenueAllTime: 0,
+                totalExpensesAllTime: 0,
+                totalProfitAllTime: 0
+            },
+
+            // Current Period Analytics
+            analytics: {
+                averageDepositSize: 0,
+                averageLoanSize: 0,
+                loanDefaultRate: 0,
+                customerAcquisitionRate: 0,
+                returnOnAssets: 0,
+                returnOnEquity: 0,
+                netInterestMargin: 0,
+                efficiencyRatio: 0,
+                revenuePerEmployee: 0,
+                profitPerCustomer: 0
+            },
+
+            // Product-level Analytics
+            productStats: {},
+
+            // Customer Segment Analytics
+            segmentStats: {
+                retail: { revenue: 0, costs: 0, profit: 0, count: 0 },
+                business: { revenue: 0, costs: 0, profit: 0, count: 0 },
+                vip: { revenue: 0, costs: 0, profit: 0, count: 0 }
             }
         };
         this.showStatistics = false;
@@ -400,6 +468,7 @@ class BankGame {
 
         if (totalRevenue > 0) {
             this.cashReserves += totalRevenue;
+            this.trackRevenue('productRevenue', totalRevenue);
             this.addEvent(`📦 Product Revenue: +$${Math.floor(totalRevenue)}`, 'success');
         }
     }
@@ -671,6 +740,7 @@ class BankGame {
             this.unlockProducts(); // Check for new product unlocks
             this.assignCustomersToProducts(); // Assign customers to products
             this.processProductRevenue(); // Generate product income
+            this.calculateMonthlyPnL(); // Calculate and record monthly P&L
             this.processRandomEvent(); // Trigger random events
             this.checkObjectives();
         }
@@ -1080,6 +1150,7 @@ class BankGame {
 
             this.loans.push(activeLoan);
             this.totalLoansIssued++;
+            this.statistics.totals.loansIssued++;
             this.customerTrust = Math.min(100, this.customerTrust + 1);
             return; // Don't display, just process
         }
@@ -1165,6 +1236,7 @@ class BankGame {
 
                 this.loans.push(activeLoan);
                 this.totalLoansIssued++;
+                this.statistics.totals.loansIssued++;
                 this.customerTrust = Math.min(100, this.customerTrust + 2);
                 this.addEvent(`✓ Approved ${loan.purpose} loan: $${loan.amount} @ ${(loan.interestRate * 100).toFixed(1)}%`, 'success');
             }
@@ -1185,6 +1257,8 @@ class BankGame {
             if (Math.random() < loan.defaultProbability) {
                 // Loan defaults!
                 this.totalLoanDefaults++;
+                this.statistics.totals.loanDefaults++;
+                this.trackExpense('loanDefaults', loan.principalRemaining);
                 this.customerTrust = Math.max(0, this.customerTrust - 5);
                 this.addEvent(`💥 LOAN DEFAULT: ${loan.purpose} ($${Math.floor(loan.principalRemaining)} lost)`, 'danger');
                 loansToRemove.push(index);
@@ -1201,6 +1275,7 @@ class BankGame {
             loan.principalRemaining -= principalPortion;
 
             this.totalProfit += interestPortion;
+            this.trackRevenue('loanInterest', interestPortion);
 
             // Check if loan is paid off
             if (loan.remainingPayments <= 0) {
@@ -1335,12 +1410,14 @@ class BankGame {
         if (wages > 0) {
             if (this.cashReserves >= wages) {
                 this.cashReserves -= wages;
+                this.trackExpense('staffWages', wages);
                 if (wages > 100) { // Only log if significant
                     this.addEvent(`Paid staff wages: -$${wages}`, 'info');
                 }
             } else {
                 // Can't pay wages! Staff quit and trust drops
                 const shortage = wages - this.cashReserves;
+                this.trackExpense('staffWages', this.cashReserves); // Track what we could pay
                 this.cashReserves = 0;
                 this.customerTrust = Math.max(0, this.customerTrust - 15);
 
@@ -1474,8 +1551,11 @@ class BankGame {
             }
         }
 
-        if (totalReturns > 10) {
-            this.addEvent(`Investment returns: +$${Math.floor(totalReturns)}`, 'success');
+        if (totalReturns > 0) {
+            this.trackRevenue('investmentReturns', totalReturns);
+            if (totalReturns > 10) {
+                this.addEvent(`Investment returns: +$${Math.floor(totalReturns)}`, 'success');
+            }
         }
     }
 
@@ -1550,6 +1630,7 @@ class BankGame {
 
             if (this.cashReserves >= interestPayment) {
                 this.cashReserves -= interestPayment;
+                this.trackExpense('depositInterest', interestPayment);
                 this.addEvent(`Paid $${Math.floor(interestPayment)} interest on deposits`, 'info');
             } else {
                 // Can't pay interest - major trust hit!
@@ -2476,21 +2557,224 @@ class BankGame {
         }
     }
 
+    // P&L Tracking Methods
+    trackRevenue(type, amount) {
+        if (amount <= 0) return;
+
+        this.statistics.currentMonth.revenue[type] += amount;
+        this.statistics.currentMonth.revenue.total += amount;
+        this.statistics.totals.totalRevenueAllTime += amount;
+    }
+
+    trackExpense(type, amount) {
+        if (amount <= 0) return;
+
+        this.statistics.currentMonth.expenses[type] += amount;
+        this.statistics.currentMonth.expenses.total += amount;
+        this.statistics.totals.totalExpensesAllTime += amount;
+    }
+
+    calculateMonthlyPnL() {
+        // Calculate net income for the month
+        this.statistics.currentMonth.netIncome =
+            this.statistics.currentMonth.revenue.total -
+            this.statistics.currentMonth.expenses.total;
+
+        // Record in history
+        this.statistics.history.monthly.revenue.push(this.statistics.currentMonth.revenue.total);
+        this.statistics.history.monthly.expenses.push(this.statistics.currentMonth.expenses.total);
+        this.statistics.history.monthly.netIncome.push(this.statistics.currentMonth.netIncome);
+        this.statistics.history.monthly.loanInterestIncome.push(this.statistics.currentMonth.revenue.loanInterest);
+        this.statistics.history.monthly.investmentReturns.push(this.statistics.currentMonth.revenue.investmentReturns);
+        this.statistics.history.monthly.productRevenue.push(this.statistics.currentMonth.revenue.productRevenue);
+        this.statistics.history.monthly.depositInterestExpense.push(this.statistics.currentMonth.expenses.depositInterest);
+        this.statistics.history.monthly.wageExpense.push(this.statistics.currentMonth.expenses.staffWages);
+        this.statistics.history.monthly.defaultExpense.push(this.statistics.currentMonth.expenses.loanDefaults);
+        this.statistics.history.monthly.timestamps.push({
+            month: this.currentMonth,
+            year: this.currentYear
+        });
+
+        // Update total profit
+        this.statistics.totals.totalProfitAllTime += this.statistics.currentMonth.netIncome;
+
+        // Reset for next month
+        this.statistics.currentMonth = {
+            revenue: {
+                loanInterest: 0,
+                investmentReturns: 0,
+                productRevenue: 0,
+                fees: 0,
+                total: 0
+            },
+            expenses: {
+                depositInterest: 0,
+                staffWages: 0,
+                loanDefaults: 0,
+                robberyLosses: 0,
+                techUpgrades: 0,
+                operationalCosts: 0,
+                total: 0
+            },
+            netIncome: 0
+        };
+    }
+
+    calculateFinancialMetrics() {
+        // Calculate key financial ratios and metrics
+        const totalAssets = this.cashReserves + this.investments.bonds +
+                           this.investments.stocks + this.investments.speculative;
+        const equity = totalAssets - this.customerDeposits;
+        const totalEmployees = this.staff.tellers + this.staff.loanOfficers +
+                              this.staff.guards + this.staff.managers;
+
+        // Return on Assets (ROA)
+        if (totalAssets > 0) {
+            this.statistics.analytics.returnOnAssets =
+                (this.totalProfit / totalAssets * 100).toFixed(2);
+        }
+
+        // Return on Equity (ROE)
+        if (equity > 0) {
+            this.statistics.analytics.returnOnEquity =
+                (this.totalProfit / equity * 100).toFixed(2);
+        }
+
+        // Net Interest Margin
+        const interestIncome = (this.statistics.history.monthly?.loanInterestIncome || []).slice(-12).reduce((a, b) => a + b, 0);
+        const interestExpense = (this.statistics.history.monthly?.depositInterestExpense || []).slice(-12).reduce((a, b) => a + b, 0);
+        if (totalAssets > 0) {
+            this.statistics.analytics.netInterestMargin =
+                ((interestIncome - interestExpense) / totalAssets * 100).toFixed(2);
+        }
+
+        // Efficiency Ratio (lower is better)
+        const recentRevenue = (this.statistics.history.monthly?.revenue || []).slice(-12).reduce((a, b) => a + b, 0);
+        const recentExpenses = (this.statistics.history.monthly?.expenses || []).slice(-12).reduce((a, b) => a + b, 0);
+        if (recentRevenue > 0) {
+            this.statistics.analytics.efficiencyRatio =
+                (recentExpenses / recentRevenue * 100).toFixed(2);
+        }
+
+        // Revenue per Employee
+        if (totalEmployees > 0) {
+            this.statistics.analytics.revenuePerEmployee =
+                Math.floor(recentRevenue / totalEmployees);
+        }
+
+        // Profit per Customer
+        if (this.activeAccounts > 0) {
+            const recentProfit = (this.statistics.history.monthly?.netIncome || []).slice(-12).reduce((a, b) => a + b, 0);
+            this.statistics.analytics.profitPerCustomer =
+                Math.floor(recentProfit / this.activeAccounts);
+        }
+
+        // Average deposit size
+        if (this.activeAccounts > 0) {
+            this.statistics.analytics.averageDepositSize =
+                Math.floor(this.customerDeposits / this.activeAccounts);
+        }
+
+        // Average loan size
+        if (this.totalLoansIssued > 0) {
+            const totalLoanValue = this.activeLoans.reduce((sum, loan) => sum + loan.amount, 0);
+            this.statistics.analytics.averageLoanSize =
+                Math.floor(totalLoanValue / this.activeLoans.length);
+        }
+
+        // Loan default rate
+        if (this.statistics.totals.loansIssued > 0) {
+            this.statistics.analytics.loanDefaultRate =
+                (this.statistics.totals.loanDefaults / this.statistics.totals.loansIssued * 100).toFixed(2);
+        }
+    }
+
     renderStatistics() {
+        // Calculate current metrics
+        this.calculateFinancialMetrics();
+
         // Update stat totals
         document.getElementById('statCustomersServed').textContent = this.statistics.totals.customersServed;
         document.getElementById('statDepositsProcessed').textContent = this.statistics.totals.depositsProcessed;
         document.getElementById('statWithdrawalsProcessed').textContent = this.statistics.totals.withdrawalsProcessed;
-        document.getElementById('statLoansIssued').textContent = this.totalLoansIssued;
-        document.getElementById('statLoanDefaults').textContent = this.totalLoanDefaults;
+        document.getElementById('statLoansIssued').textContent = this.statistics.totals.loansIssued;
+        document.getElementById('statLoanDefaults').textContent = this.statistics.totals.loanDefaults;
         document.getElementById('statRobberiesPrevented').textContent = this.statistics.totals.robberiesPrevented;
         document.getElementById('statRobberiesSucceeded').textContent = this.statistics.totals.robberiesSucceeded;
 
-        // Render charts
-        this.renderChart('cashChart', this.statistics.history.cash, 'Cash Reserves', '#44ff44');
-        this.renderChart('depositsChart', this.statistics.history.deposits, 'Customer Deposits', '#00aaff');
-        this.renderChart('profitChart', this.statistics.history.profit, 'Total Profit', '#ffaa00');
-        this.renderChart('accountsChart', this.statistics.history.accounts, 'Active Accounts', '#ff44ff');
+        // Update P&L Summary (with safety checks)
+        const monthlyRevenue = (this.statistics.history.monthly?.revenue || []).slice(-12).reduce((a, b) => a + b, 0);
+        const monthlyExpenses = (this.statistics.history.monthly?.expenses || []).slice(-12).reduce((a, b) => a + b, 0);
+        const monthlyProfit = (this.statistics.history.monthly?.netIncome || []).slice(-12).reduce((a, b) => a + b, 0);
+
+        const elem1 = document.getElementById('totalRevenueL12M');
+        const elem2 = document.getElementById('totalExpensesL12M');
+        const elem3 = document.getElementById('netIncomeL12M');
+        const elem4 = document.getElementById('totalRevenueAllTime');
+        const elem5 = document.getElementById('totalExpensesAllTime');
+        const elem6 = document.getElementById('netIncomeAllTime');
+
+        if (elem1) elem1.textContent = `$${Math.floor(monthlyRevenue)}`;
+        if (elem2) elem2.textContent = `$${Math.floor(monthlyExpenses)}`;
+        if (elem3) elem3.textContent = `$${Math.floor(monthlyProfit)}`;
+        if (elem4) elem4.textContent = `$${Math.floor(this.statistics.totals.totalRevenueAllTime || 0)}`;
+        if (elem5) elem5.textContent = `$${Math.floor(this.statistics.totals.totalExpensesAllTime || 0)}`;
+        if (elem6) elem6.textContent = `$${Math.floor(this.statistics.totals.totalProfitAllTime || 0)}`;
+
+        // Update Revenue Breakdown
+        const recentLoanInterest = (this.statistics.history.monthly?.loanInterestIncome || []).slice(-12).reduce((a, b) => a + b, 0);
+        const recentInvestments = (this.statistics.history.monthly?.investmentReturns || []).slice(-12).reduce((a, b) => a + b, 0);
+        const recentProducts = (this.statistics.history.monthly?.productRevenue || []).slice(-12).reduce((a, b) => a + b, 0);
+
+        const elem7 = document.getElementById('revenueLoanInterest');
+        const elem8 = document.getElementById('revenueInvestments');
+        const elem9 = document.getElementById('revenueProducts');
+
+        if (elem7) elem7.textContent = `$${Math.floor(recentLoanInterest)}`;
+        if (elem8) elem8.textContent = `$${Math.floor(recentInvestments)}`;
+        if (elem9) elem9.textContent = `$${Math.floor(recentProducts)}`;
+
+        // Update Expense Breakdown
+        const recentDepositInterest = (this.statistics.history.monthly?.depositInterestExpense || []).slice(-12).reduce((a, b) => a + b, 0);
+        const recentWages = (this.statistics.history.monthly?.wageExpense || []).slice(-12).reduce((a, b) => a + b, 0);
+        const recentDefaults = (this.statistics.history.monthly?.defaultExpense || []).slice(-12).reduce((a, b) => a + b, 0);
+
+        const elem10 = document.getElementById('expenseDepositInterest');
+        const elem11 = document.getElementById('expenseWages');
+        const elem12 = document.getElementById('expenseDefaults');
+
+        if (elem10) elem10.textContent = `$${Math.floor(recentDepositInterest)}`;
+        if (elem11) elem11.textContent = `$${Math.floor(recentWages)}`;
+        if (elem12) elem12.textContent = `$${Math.floor(recentDefaults)}`;
+
+        // Update Financial Metrics
+        const elem13 = document.getElementById('metricROA');
+        const elem14 = document.getElementById('metricROE');
+        const elem15 = document.getElementById('metricNIM');
+        const elem16 = document.getElementById('metricEfficiency');
+        const elem17 = document.getElementById('metricRevenuePerEmployee');
+        const elem18 = document.getElementById('metricProfitPerCustomer');
+        const elem19 = document.getElementById('metricAvgDeposit');
+        const elem20 = document.getElementById('metricAvgLoan');
+        const elem21 = document.getElementById('metricDefaultRate');
+
+        if (elem13) elem13.textContent = `${this.statistics.analytics.returnOnAssets || 0}%`;
+        if (elem14) elem14.textContent = `${this.statistics.analytics.returnOnEquity || 0}%`;
+        if (elem15) elem15.textContent = `${this.statistics.analytics.netInterestMargin || 0}%`;
+        if (elem16) elem16.textContent = `${this.statistics.analytics.efficiencyRatio || 0}%`;
+        if (elem17) elem17.textContent = `$${this.statistics.analytics.revenuePerEmployee || 0}`;
+        if (elem18) elem18.textContent = `$${this.statistics.analytics.profitPerCustomer || 0}`;
+        if (elem19) elem19.textContent = `$${this.statistics.analytics.averageDepositSize || 0}`;
+        if (elem20) elem20.textContent = `$${this.statistics.analytics.averageLoanSize || 0}`;
+        if (elem21) elem21.textContent = `${this.statistics.analytics.loanDefaultRate || 0}%`;
+
+        // Render charts (with safety checks)
+        this.renderChart('cashChart', this.statistics.history.cash || [], 'Cash Reserves', '#44ff44');
+        this.renderChart('depositsChart', this.statistics.history.deposits || [], 'Customer Deposits', '#00aaff');
+        this.renderChart('profitChart', this.statistics.history.monthly?.netIncome || [], 'Monthly Net Income', '#ffaa00');
+        this.renderChart('accountsChart', this.statistics.history.accounts || [], 'Active Accounts', '#ff44ff');
+        this.renderChart('revenueChart', this.statistics.history.monthly?.revenue || [], 'Monthly Revenue', '#44ff44');
+        this.renderChart('expensesChart', this.statistics.history.monthly?.expenses || [], 'Monthly Expenses', '#ff4444');
     }
 
     renderChart(canvasId, data, label, color) {

@@ -1223,6 +1223,151 @@ button.active {
     border: 1px solid var(--border-color);
 }
 
+/* Comprehensive P&L and Analytics */
+.pnl-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+}
+
+.pnl-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pnl-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.pnl-column h4 {
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.pnl-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pnl-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.pnl-row.pnl-header {
+    background: rgba(0, 255, 0, 0.15);
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 1rem;
+    margin-top: 10px;
+    border-top: 2px solid var(--border-color);
+}
+
+.pnl-row.pnl-expense {
+    background: rgba(255, 68, 68, 0.15);
+}
+
+.pnl-row.pnl-item {
+    padding-left: 25px;
+    font-size: 0.85rem;
+}
+
+.pnl-row.pnl-net {
+    background: rgba(0, 255, 0, 0.25);
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    border-top: 3px double var(--border-color);
+    border-bottom: 3px double var(--border-color);
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.pnl-row.pnl-spacer {
+    padding: 12px 0;
+    background: transparent;
+}
+
+/* Financial Metrics */
+.metrics-section,
+.operational-section,
+.charts-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+}
+
+.metrics-section h3,
+.operational-section h3,
+.charts-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.metric-card {
+    background: var(--primary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.metric-card:hover {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.metric-value {
+    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 10px 0;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.metric-hint {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-style: italic;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
 /* Customer Segments */
 .customer-segments {
     margin-top: 15px;
@@ -1412,19 +1557,19 @@ button.active {
 }
 
 .competitors-toggle {
-    bottom: 80px;
+    bottom: 90px;
 }
 
 .economy-toggle {
-    bottom: 140px;
+    bottom: 165px;
 }
 
 .branches-toggle {
-    bottom: 200px;
+    bottom: 240px;
 }
 
 .products-toggle {
-    bottom: 260px;
+    bottom: 315px;
 }
 
 .competitors-toggle button,
