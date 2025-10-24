@@ -11,6 +11,7 @@
         <header>
             <h1>🏦 BANK TYCOON 🏦</h1>
             <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
+            <div class="version-info">v1.0.0 | Updated: December 2024</div>
         </header>
 
         <div class="game-grid">
@@ -152,6 +153,16 @@
                     <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
                     <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
                     <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
+                </div>
+                <div class="withdrawal-threshold-control">
+                    <label for="withdrawalThreshold">Auto-Approve Withdrawals up to: <span id="withdrawalThresholdDisplay">$200</span></label>
+                    <input type="range" id="withdrawalThreshold" min="0" max="500" value="200" step="50"
+                           oninput="game.updateWithdrawalThreshold(this.value)">
+                    <div class="threshold-labels">
+                        <span>$0</span>
+                        <span>$250</span>
+                        <span>$500</span>
+                    </div>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>

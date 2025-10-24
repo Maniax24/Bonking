@@ -61,6 +61,14 @@ header h1 {
     font-weight: bold;
 }
 
+.version-info {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.8;
+}
+
 .game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -549,14 +557,62 @@ header h1 {
     color: var(--text-success);
 }
 
-.auto-approve-control {
+.withdrawal-threshold-control {
     margin-bottom: 15px;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
 }
 
-.auto-approve-control button {
+.withdrawal-threshold-control label {
+    display: block;
+    color: var(--text-secondary);
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.withdrawal-threshold-control span {
+    color: var(--text-warning);
+    font-size: 1.1rem;
+}
+
+.withdrawal-threshold-control input[type="range"] {
     width: 100%;
-    padding: 12px;
-    font-size: 1rem;
+    margin: 10px 0;
+    height: 8px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.withdrawal-threshold-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--text-success);
+    cursor: pointer;
+    border: 2px solid var(--text-primary);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.withdrawal-threshold-control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--text-success);
+    cursor: pointer;
+    border: 2px solid var(--text-primary);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.threshold-labels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 5px;
 }
 
 .game-date {

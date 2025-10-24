@@ -17,6 +17,7 @@ class BankGame {
         this.customerTrust = 100;
         this.customerQueue = [];
         this.autoApproveDeposits = true; // Auto-approve deposits by default
+        this.autoWithdrawalThreshold = 200; // Max withdrawal amount to auto-approve
 
         // Loan System
         this.loans = []; // Active loans
@@ -396,6 +397,14 @@ class BankGame {
         this.addEvent(`Speed changed to ${speed === 500 ? 'Fast' : speed === 1500 ? 'Normal' : 'Slow'}`, 'info');
     }
 
+    updateWithdrawalThreshold(value) {
+        this.autoWithdrawalThreshold = parseInt(value);
+        const display = document.getElementById('withdrawalThresholdDisplay');
+        if (display) {
+            display.textContent = `$${this.autoWithdrawalThreshold}`;
+        }
+    }
+
     // Customer Management
 
     generateCustomer() {
@@ -420,10 +429,10 @@ class BankGame {
 
             // Auto-approve small withdrawals if we have plenty of cash
             // Only show withdrawal requests if:
-            // 1. Amount is large (>$200) OR
+            // 1. Amount is larger than threshold OR
             // 2. Would bring reserves below 30% of deposits
             const reserveRatioAfter = ((this.cashReserves - amount) / this.customerDeposits) * 100;
-            const isSmallWithdrawal = amount <= 200;
+            const isSmallWithdrawal = amount <= this.autoWithdrawalThreshold;
             const hasGoodReserves = reserveRatioAfter >= 30;
 
             if (isSmallWithdrawal && hasGoodReserves && this.cashReserves >= amount) {
