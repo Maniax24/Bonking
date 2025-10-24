@@ -31,16 +31,27 @@ class BankGame {
         // Technology
         this.technologies = {
             security: [
-                { id: 'vault1', name: 'Reinforced Vault', cost: 500, level: 0, protection: 20, maxLevel: 3 },
-                { id: 'guards', name: 'Security Guards', cost: 800, level: 0, protection: 30, maxLevel: 3 },
-                { id: 'alarm', name: 'Alarm System', cost: 1500, level: 0, protection: 40, maxLevel: 2 },
-                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950 }
+                { id: 'vault1', name: 'Reinforced Vault', cost: 500, level: 0, protection: 20, maxLevel: 3, desc: 'Better vault protection' },
+                { id: 'guards', name: 'Security Guards', cost: 800, level: 0, protection: 30, maxLevel: 3, desc: 'Hire security personnel' },
+                { id: 'alarm', name: 'Alarm System', cost: 1500, level: 0, protection: 40, maxLevel: 2, desc: 'Alert system for threats' },
+                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950, desc: 'Video surveillance' }
             ],
             profit: [
-                { id: 'accounting', name: 'Better Accounting', cost: 400, level: 0, bonus: 0.05, maxLevel: 3 },
-                { id: 'marketing', name: 'Marketing Campaign', cost: 600, level: 0, bonus: 0.08, maxLevel: 3 },
-                { id: 'automation', name: 'Office Automation', cost: 2000, level: 0, bonus: 0.15, maxLevel: 2, minYear: 1960 },
-                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990 }
+                { id: 'accounting', name: 'Better Accounting', cost: 400, level: 0, bonus: 0.05, maxLevel: 3, desc: '+5% profit per level' },
+                { id: 'marketing', name: 'Marketing Campaign', cost: 600, level: 0, bonus: 0.08, maxLevel: 3, desc: '+8% profit per level' },
+                { id: 'automation', name: 'Office Automation', cost: 2000, level: 0, bonus: 0.15, maxLevel: 2, minYear: 1960, desc: '+15% profit per level' },
+                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990, desc: '+25% profit per level' }
+            ],
+            customer: [
+                { id: 'service', name: 'Customer Service', cost: 300, level: 0, benefit: 2, maxLevel: 5, desc: '+2% trust recovery per level' },
+                { id: 'rewards', name: 'Rewards Program', cost: 800, level: 0, benefit: 0.5, maxLevel: 3, desc: '+0.5 customers/month per level' },
+                { id: 'branches', name: 'New Branches', cost: 2000, level: 0, benefit: 1, maxLevel: 3, minYear: 1940, desc: '+1 customer/month per level' },
+                { id: 'atm', name: 'ATM Network', cost: 4000, level: 0, benefit: 2, maxLevel: 2, minYear: 1970, desc: '+2 customers/month per level' }
+            ],
+            efficiency: [
+                { id: 'training', name: 'Staff Training', cost: 500, level: 0, benefit: 0.02, maxLevel: 3, desc: '-2% operating costs per level' },
+                { id: 'systems', name: 'Better Systems', cost: 1200, level: 0, benefit: 0.03, maxLevel: 3, minYear: 1950, desc: '-3% costs per level' },
+                { id: 'ai', name: 'AI Assistant', cost: 6000, level: 0, benefit: 0.05, maxLevel: 2, minYear: 2000, desc: '-5% costs per level' }
             ]
         };
 
@@ -51,6 +62,23 @@ class BankGame {
         // Events
         this.eventLog = [];
         this.lastThiefAttempt = 0;
+
+        // Objectives System
+        this.objectives = [
+            { id: 'cash_5k', name: 'Reach $5,000 cash', target: 5000, type: 'cash', completed: false, reward: 500 },
+            { id: 'cash_10k', name: 'Reach $10,000 cash', target: 10000, type: 'cash', completed: false, reward: 1000 },
+            { id: 'cash_50k', name: 'Reach $50,000 cash', target: 50000, type: 'cash', completed: false, reward: 5000 },
+            { id: 'year_1930', name: 'Survive until 1930', target: 1930, type: 'year', completed: false, reward: 2000 },
+            { id: 'year_1950', name: 'Survive until 1950', target: 1950, type: 'year', completed: false, reward: 5000 },
+            { id: 'year_1970', name: 'Survive until 1970', target: 1970, type: 'year', completed: false, reward: 10000 },
+            { id: 'profit_10k', name: 'Earn $10,000 total profit', target: 10000, type: 'profit', completed: false, reward: 2000 },
+            { id: 'profit_50k', name: 'Earn $50,000 total profit', target: 50000, type: 'profit', completed: false, reward: 10000 },
+            { id: 'accounts_50', name: 'Reach 50 active accounts', target: 50, type: 'accounts', completed: false, reward: 1000 },
+            { id: 'accounts_100', name: 'Reach 100 active accounts', target: 100, type: 'accounts', completed: false, reward: 3000 },
+            { id: 'trust_100', name: 'Maintain 100% trust for 1 year', target: 12, type: 'trust', completed: false, reward: 2000, counter: 0 },
+            { id: 'security_max', name: 'Max out all security tech', target: 1, type: 'security', completed: false, reward: 5000 },
+            { id: 'profit_max', name: 'Max out all profit tech', target: 1, type: 'profit_tech', completed: false, reward: 5000 }
+        ];
 
         this.init();
     }
@@ -270,8 +298,11 @@ class BankGame {
             this.saveGame();
         }
 
-        // Generate 2-4 customers each month
-        const customerCount = Math.floor(Math.random() * 3) + 2;
+        // Generate 2-4 customers each month + customer tech bonuses
+        const baseCustomers = Math.floor(Math.random() * 3) + 2;
+        const bonusCustomers = Math.floor(this.getCustomerBonus());
+        const customerCount = baseCustomers + bonusCustomers;
+
         for (let i = 0; i < customerCount; i++) {
             this.generateCustomer();
         }
@@ -280,6 +311,9 @@ class BankGame {
         this.processInvestments();
         this.processCustomerEvents();
         this.processThiefEvents();
+
+        // Check objectives
+        this.checkObjectives();
 
         this.updateDisplay();
     }
@@ -546,18 +580,32 @@ class BankGame {
     renderTechTree() {
         const securityDiv = document.getElementById('securityTech');
         const profitDiv = document.getElementById('profitTech');
+        const customerDiv = document.getElementById('customerTech');
+        const efficiencyDiv = document.getElementById('efficiencyTech');
 
-        securityDiv.innerHTML = '';
-        profitDiv.innerHTML = '';
+        if (securityDiv) securityDiv.innerHTML = '';
+        if (profitDiv) profitDiv.innerHTML = '';
+        if (customerDiv) customerDiv.innerHTML = '';
+        if (efficiencyDiv) efficiencyDiv.innerHTML = '';
 
         this.technologies.security.forEach(tech => {
             if (tech.minYear && this.currentYear < tech.minYear) return;
-            securityDiv.appendChild(this.createTechButton('security', tech));
+            if (securityDiv) securityDiv.appendChild(this.createTechButton('security', tech));
         });
 
         this.technologies.profit.forEach(tech => {
             if (tech.minYear && this.currentYear < tech.minYear) return;
-            profitDiv.appendChild(this.createTechButton('profit', tech));
+            if (profitDiv) profitDiv.appendChild(this.createTechButton('profit', tech));
+        });
+
+        this.technologies.customer.forEach(tech => {
+            if (tech.minYear && this.currentYear < tech.minYear) return;
+            if (customerDiv) customerDiv.appendChild(this.createTechButton('customer', tech));
+        });
+
+        this.technologies.efficiency.forEach(tech => {
+            if (tech.minYear && this.currentYear < tech.minYear) return;
+            if (efficiencyDiv) efficiencyDiv.appendChild(this.createTechButton('efficiency', tech));
         });
     }
 
@@ -571,6 +619,7 @@ class BankGame {
 
         div.innerHTML = `
             <div class="tech-name">${tech.name}</div>
+            <div class="tech-desc">${tech.desc || ''}</div>
             <div class="tech-level">Level: ${tech.level}/${tech.maxLevel}</div>
             <div class="tech-cost">Cost: $${cost}</div>
             <button
@@ -637,9 +686,10 @@ class BankGame {
             }
         }
 
-        // Trust recovery
+        // Trust recovery (boosted by customer service tech)
         if (this.customerTrust < 100) {
-            this.customerTrust = Math.min(100, this.customerTrust + 1);
+            const recovery = this.getTrustRecoveryBonus();
+            this.customerTrust = Math.min(100, this.customerTrust + recovery);
         }
     }
 
@@ -701,6 +751,120 @@ class BankGame {
 
         document.getElementById('portfolioDisplay').innerHTML =
             portfolio.length > 0 ? portfolio.join('<br>') : 'No investments yet';
+
+        // Update objectives display
+        this.updateObjectivesDisplay();
+    }
+
+    // Objectives System
+    checkObjectives() {
+        this.objectives.forEach(obj => {
+            if (obj.completed) return;
+
+            let progress = 0;
+            let complete = false;
+
+            switch (obj.type) {
+                case 'cash':
+                    progress = this.cashReserves;
+                    complete = this.cashReserves >= obj.target;
+                    break;
+                case 'year':
+                    progress = this.currentYear;
+                    complete = this.currentYear >= obj.target;
+                    break;
+                case 'profit':
+                    progress = this.totalProfit;
+                    complete = this.totalProfit >= obj.target;
+                    break;
+                case 'accounts':
+                    progress = this.activeAccounts;
+                    complete = this.activeAccounts >= obj.target;
+                    break;
+                case 'trust':
+                    if (this.customerTrust >= 100) {
+                        obj.counter = (obj.counter || 0) + 1;
+                    } else {
+                        obj.counter = 0;
+                    }
+                    progress = obj.counter;
+                    complete = obj.counter >= obj.target;
+                    break;
+                case 'security':
+                    const securityMaxed = this.technologies.security.every(t => t.level >= t.maxLevel);
+                    complete = securityMaxed;
+                    break;
+                case 'profit_tech':
+                    const profitMaxed = this.technologies.profit.every(t => t.level >= t.maxLevel);
+                    complete = profitMaxed;
+                    break;
+            }
+
+            if (complete) {
+                obj.completed = true;
+                this.cashReserves += obj.reward;
+                this.addEvent(`🎯 Objective Complete: ${obj.name}! Reward: $${obj.reward}`, 'success');
+            }
+        });
+    }
+
+    updateObjectivesDisplay() {
+        const container = document.getElementById('objectivesList');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Show only incomplete objectives (first 5) and recently completed (last 3)
+        const incomplete = this.objectives.filter(o => !o.completed).slice(0, 5);
+        const completed = this.objectives.filter(o => o.completed).slice(-3);
+
+        [...incomplete, ...completed].forEach(obj => {
+            const div = document.createElement('div');
+            div.className = obj.completed ? 'objective completed' : 'objective';
+
+            let progress = 0;
+            switch (obj.type) {
+                case 'cash': progress = this.cashReserves; break;
+                case 'year': progress = this.currentYear; break;
+                case 'profit': progress = this.totalProfit; break;
+                case 'accounts': progress = this.activeAccounts; break;
+                case 'trust': progress = obj.counter || 0; break;
+                case 'security':
+                case 'profit_tech': progress = obj.completed ? 1 : 0; break;
+            }
+
+            const percentage = Math.min(100, (progress / obj.target) * 100);
+
+            div.innerHTML = `
+                <div class="objective-name">${obj.completed ? '✓' : '○'} ${obj.name}</div>
+                <div class="objective-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="objective-reward">Reward: $${obj.reward}</div>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+    }
+
+    getCustomerBonus() {
+        let bonus = 0;
+        this.technologies.customer.forEach(tech => {
+            bonus += tech.level * tech.benefit;
+        });
+        return bonus;
+    }
+
+    getTrustRecoveryBonus() {
+        let bonus = 1; // Base recovery
+        this.technologies.customer.forEach(tech => {
+            if (tech.id === 'service') {
+                bonus += tech.level * (tech.benefit / 100); // Convert to multiplier
+            }
+        });
+        return bonus;
     }
 }
 
