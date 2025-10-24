@@ -11,7 +11,7 @@
         <header>
             <h1>🏦 BANK TYCOON 🏦</h1>
             <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
-            <div class="version-info">v1.0.0 | Updated: December 2024</div>
+            <div class="version-info">v1.1.0 | Updated: December 2024</div>
         </header>
 
         <div class="game-grid">
@@ -215,7 +215,70 @@
                 <div class="wage-info">
                     <strong>Monthly Wages:</strong> $<span id="totalWages">0</span>
                 </div>
+                <div class="loan-officer-info">
+                    💡 Loan Officers auto-approve low-risk loans
+                </div>
             </div>
+
+            <!-- Statistics Panel -->
+            <div class="panel statistics-panel" id="statisticsPanel" style="display: none;">
+                <h2>📊 Statistics & Analytics</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Customers Served</div>
+                        <div class="stat-value" id="statCustomersServed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Deposits Processed</div>
+                        <div class="stat-value" id="statDepositsProcessed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Withdrawals Processed</div>
+                        <div class="stat-value" id="statWithdrawalsProcessed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Loans Issued</div>
+                        <div class="stat-value" id="statLoansIssued">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Loan Defaults</div>
+                        <div class="stat-value" id="statLoanDefaults">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Robberies Prevented</div>
+                        <div class="stat-value" id="statRobberiesPrevented">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Robberies Succeeded</div>
+                        <div class="stat-value" id="statRobberiesSucceeded">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h3>Cash Reserves Over Time</h3>
+                        <canvas id="cashChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Customer Deposits Over Time</h3>
+                        <canvas id="depositsChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Total Profit Over Time</h3>
+                        <canvas id="profitChart" width="400" height="150"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Active Accounts Over Time</h3>
+                        <canvas id="accountsChart" width="400" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Toggle Button -->
+        <div class="statistics-toggle">
+            <button id="toggleStatsBtn" onclick="game.toggleStatistics()">📊 Statistics</button>
         </div>
     </div>
 

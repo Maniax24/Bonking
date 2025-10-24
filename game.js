@@ -25,6 +25,7 @@ class BankGame {
         this.totalLoansIssued = 0;
         this.totalLoanDefaults = 0;
         this.loanIdCounter = 0;
+        this.autoApproveLowRiskLoans = true; // Auto-approve low-risk loans with loan officers
 
         // Staff Management
         this.staff = {
@@ -60,24 +61,32 @@ class BankGame {
                 { id: 'vault1', name: 'Reinforced Vault', cost: 500, level: 0, protection: 20, maxLevel: 3, desc: 'Better vault protection' },
                 { id: 'guards', name: 'Security Guards', cost: 800, level: 0, protection: 30, maxLevel: 3, desc: 'Hire security personnel' },
                 { id: 'alarm', name: 'Alarm System', cost: 1500, level: 0, protection: 40, maxLevel: 2, desc: 'Alert system for threats' },
-                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950, desc: 'Video surveillance' }
+                { id: 'cameras', name: 'Security Cameras', cost: 3000, level: 0, protection: 50, maxLevel: 2, minYear: 1950, desc: 'Video surveillance' },
+                { id: 'biometric', name: 'Biometric Access', cost: 8000, level: 0, protection: 70, maxLevel: 2, minYear: 1990, desc: 'Fingerprint/retina scans' },
+                { id: 'cyber', name: 'Cybersecurity', cost: 12000, level: 0, protection: 80, maxLevel: 3, minYear: 2000, desc: 'Digital protection' }
             ],
             profit: [
                 { id: 'accounting', name: 'Better Accounting', cost: 400, level: 0, bonus: 0.05, maxLevel: 3, desc: '+5% profit per level' },
                 { id: 'marketing', name: 'Marketing Campaign', cost: 600, level: 0, bonus: 0.08, maxLevel: 3, desc: '+8% profit per level' },
                 { id: 'automation', name: 'Office Automation', cost: 2000, level: 0, bonus: 0.15, maxLevel: 2, minYear: 1960, desc: '+15% profit per level' },
-                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990, desc: '+25% profit per level' }
+                { id: 'digital', name: 'Digital Banking', cost: 5000, level: 0, bonus: 0.25, maxLevel: 2, minYear: 1990, desc: '+25% profit per level' },
+                { id: 'trading', name: 'Algorithmic Trading', cost: 8000, level: 0, bonus: 0.20, maxLevel: 2, minYear: 2000, desc: '+20% profit per level' },
+                { id: 'blockchain', name: 'Blockchain Integration', cost: 15000, level: 0, bonus: 0.30, maxLevel: 2, minYear: 2010, desc: '+30% profit per level' }
             ],
             customer: [
                 { id: 'service', name: 'Customer Service', cost: 300, level: 0, benefit: 2, maxLevel: 5, desc: '+2% trust recovery per level' },
                 { id: 'rewards', name: 'Rewards Program', cost: 800, level: 0, benefit: 0.5, maxLevel: 3, desc: '+0.5 customers/month per level' },
                 { id: 'branches', name: 'New Branches', cost: 2000, level: 0, benefit: 1, maxLevel: 3, minYear: 1940, desc: '+1 customer/month per level' },
-                { id: 'atm', name: 'ATM Network', cost: 4000, level: 0, benefit: 2, maxLevel: 2, minYear: 1970, desc: '+2 customers/month per level' }
+                { id: 'atm', name: 'ATM Network', cost: 4000, level: 0, benefit: 2, maxLevel: 2, minYear: 1970, desc: '+2 customers/month per level' },
+                { id: 'mobile', name: 'Mobile Banking', cost: 7000, level: 0, benefit: 3, maxLevel: 2, minYear: 2000, desc: '+3 customers/month per level' },
+                { id: 'social', name: 'Social Media Presence', cost: 5000, level: 0, benefit: 5, maxLevel: 2, minYear: 2010, desc: '+5% trust recovery per level' }
             ],
             efficiency: [
                 { id: 'training', name: 'Staff Training', cost: 500, level: 0, benefit: 0.02, maxLevel: 3, desc: '-2% operating costs per level' },
                 { id: 'systems', name: 'Better Systems', cost: 1200, level: 0, benefit: 0.03, maxLevel: 3, minYear: 1950, desc: '-3% costs per level' },
-                { id: 'ai', name: 'AI Assistant', cost: 6000, level: 0, benefit: 0.05, maxLevel: 2, minYear: 2000, desc: '-5% costs per level' }
+                { id: 'ai', name: 'AI Assistant', cost: 6000, level: 0, benefit: 0.05, maxLevel: 2, minYear: 2000, desc: '-5% costs per level' },
+                { id: 'cloud', name: 'Cloud Infrastructure', cost: 10000, level: 0, benefit: 0.04, maxLevel: 2, minYear: 2010, desc: '-4% costs per level' },
+                { id: 'ml', name: 'Machine Learning', cost: 18000, level: 0, benefit: 0.06, maxLevel: 2, minYear: 2015, desc: '-6% costs + predictions' }
             ]
         };
 
@@ -88,6 +97,24 @@ class BankGame {
         // Events
         this.eventLog = [];
         this.lastThiefAttempt = 0;
+
+        // Statistics Tracking
+        this.statistics = {
+            history: {
+                cash: [],           // {month, year, value}
+                deposits: [],       // {month, year, value}
+                profit: [],         // {month, year, value}
+                accounts: []        // {month, year, value}
+            },
+            totals: {
+                customersServed: 0,
+                depositsProcessed: 0,
+                withdrawalsProcessed: 0,
+                robberiesPrevented: 0,
+                robberiesSucceeded: 0
+            }
+        };
+        this.showStatistics = false;
 
         // Objectives System
         this.objectives = [
@@ -119,7 +146,7 @@ class BankGame {
     // Save/Load System
     saveGame() {
         const saveData = {
-            version: '1.0',
+            version: '1.1',
             timestamp: Date.now(),
             cashReserves: this.cashReserves,
             customerDeposits: this.customerDeposits,
@@ -333,6 +360,9 @@ class BankGame {
                 this.saveGame();
             }
 
+            // Record historical data each month
+            this.recordHistoricalData();
+
             // Process monthly events
             this.processLoans();
             this.processInvestments();
@@ -472,6 +502,8 @@ class BankGame {
                 this.customerDeposits += amount;
                 this.activeAccounts++;
                 this.dailyTellerUsed++;
+                this.statistics.totals.customersServed++;
+                this.statistics.totals.depositsProcessed++;
                 return; // Don't display, just process
             }
         } else {
@@ -493,6 +525,8 @@ class BankGame {
                 this.cashReserves -= amount;
                 this.customerDeposits -= amount;
                 this.dailyTellerUsed++;
+                this.statistics.totals.customersServed++;
+                this.statistics.totals.withdrawalsProcessed++;
                 return; // Don't display, just process
             }
         }
@@ -558,11 +592,15 @@ class BankGame {
                 this.cashReserves += customer.amount;
                 this.customerDeposits += customer.amount;
                 this.activeAccounts++;
+                this.statistics.totals.customersServed++;
+                this.statistics.totals.depositsProcessed++;
                 this.addEvent(`✓ Accepted deposit of $${customer.amount}`, 'success');
             } else { // withdrawal
                 if (this.cashReserves >= customer.amount) {
                     this.cashReserves -= customer.amount;
                     this.customerDeposits -= customer.amount;
+                    this.statistics.totals.customersServed++;
+                    this.statistics.totals.withdrawalsProcessed++;
                     this.addEvent(`✓ Processed withdrawal of $${customer.amount}`, 'success');
                 } else {
                     this.customerTrust = Math.max(0, this.customerTrust - 10);
@@ -573,6 +611,7 @@ class BankGame {
             if (customer.type === 'withdrawal') {
                 this.customerTrust = Math.max(0, this.customerTrust - 5);
             }
+            this.statistics.totals.customersServed++;
             this.addEvent(`Denied customer request for $${customer.amount}`, 'warning');
         }
 
@@ -618,6 +657,31 @@ class BankGame {
             defaultProbability: defaultProbability / 12, // Convert to monthly
             requestDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
         };
+
+        // Auto-approve low-risk loans if we have loan officers
+        const hasLoanOfficers = this.staff.loanOfficers > 0;
+        const isLowRisk = loanType.risk === 'low';
+        const hasEnoughCash = this.cashReserves >= amount * 1.5; // Need 50% buffer
+
+        if (this.autoApproveLowRiskLoans && hasLoanOfficers && isLowRisk && hasEnoughCash) {
+            // Auto-approve the loan
+            this.cashReserves -= amount;
+            const monthlyPayment = this.calculateLoanPayment(amount, loanType.interestRate, termMonths);
+
+            const activeLoan = {
+                ...loanRequest,
+                monthlyPayment: monthlyPayment,
+                remainingPayments: termMonths,
+                principalRemaining: amount,
+                totalPaid: 0,
+                issueDate: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+            };
+
+            this.loans.push(activeLoan);
+            this.totalLoansIssued++;
+            this.customerTrust = Math.min(100, this.customerTrust + 1);
+            return; // Don't display, just process
+        }
 
         this.loanQueue.push(loanRequest);
         this.displayLoanRequest(loanRequest);
@@ -1150,11 +1214,13 @@ class BankGame {
         const thiefSkill = Math.random() * 100 + 50; // 50-150 skill
 
         if (protection > thiefSkill) {
+            this.statistics.totals.robberiesPrevented++;
             this.addEvent('🚨 Thief attempted robbery but was thwarted by security!', 'success');
         } else {
             const stolenAmount = Math.floor(this.cashReserves * (Math.random() * 0.15 + 0.05)); // 5-20%
             this.cashReserves = Math.max(0, this.cashReserves - stolenAmount);
             this.customerTrust = Math.max(0, this.customerTrust - 15);
+            this.statistics.totals.robberiesSucceeded++;
             this.addEvent(`🚨 ROBBERY! Thieves stole $${stolenAmount}! Customer trust decreased!`, 'danger');
         }
     }
@@ -1383,6 +1449,136 @@ class BankGame {
             }
         });
         return bonus;
+    }
+
+    // Statistics System
+    recordHistoricalData() {
+        const dataPoint = {
+            month: this.currentMonth,
+            year: this.currentYear,
+            cash: this.cashReserves,
+            deposits: this.customerDeposits,
+            profit: this.totalProfit,
+            accounts: this.activeAccounts
+        };
+
+        // Limit history to last 120 months (10 years)
+        if (this.statistics.history.cash.length >= 120) {
+            this.statistics.history.cash.shift();
+            this.statistics.history.deposits.shift();
+            this.statistics.history.profit.shift();
+            this.statistics.history.accounts.shift();
+        }
+
+        this.statistics.history.cash.push(dataPoint.cash);
+        this.statistics.history.deposits.push(dataPoint.deposits);
+        this.statistics.history.profit.push(dataPoint.profit);
+        this.statistics.history.accounts.push(dataPoint.accounts);
+    }
+
+    toggleStatistics() {
+        this.showStatistics = !this.showStatistics;
+        const panel = document.getElementById('statisticsPanel');
+        const btn = document.getElementById('toggleStatsBtn');
+
+        if (this.showStatistics) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.renderStatistics();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    renderStatistics() {
+        // Update stat totals
+        document.getElementById('statCustomersServed').textContent = this.statistics.totals.customersServed;
+        document.getElementById('statDepositsProcessed').textContent = this.statistics.totals.depositsProcessed;
+        document.getElementById('statWithdrawalsProcessed').textContent = this.statistics.totals.withdrawalsProcessed;
+        document.getElementById('statLoansIssued').textContent = this.totalLoansIssued;
+        document.getElementById('statLoanDefaults').textContent = this.totalLoanDefaults;
+        document.getElementById('statRobberiesPrevented').textContent = this.statistics.totals.robberiesPrevented;
+        document.getElementById('statRobberiesSucceeded').textContent = this.statistics.totals.robberiesSucceeded;
+
+        // Render charts
+        this.renderChart('cashChart', this.statistics.history.cash, 'Cash Reserves', '#44ff44');
+        this.renderChart('depositsChart', this.statistics.history.deposits, 'Customer Deposits', '#00aaff');
+        this.renderChart('profitChart', this.statistics.history.profit, 'Total Profit', '#ffaa00');
+        this.renderChart('accountsChart', this.statistics.history.accounts, 'Active Accounts', '#ff44ff');
+    }
+
+    renderChart(canvasId, data, label, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.fillStyle = '#001100';
+        ctx.fillRect(0, 0, width, height);
+
+        if (data.length < 2) {
+            ctx.fillStyle = '#44ff44';
+            ctx.font = '12px monospace';
+            ctx.fillText('Not enough data yet...', 10, height / 2);
+            return;
+        }
+
+        // Find min and max for scaling
+        const max = Math.max(...data, 1);
+        const min = Math.min(...data, 0);
+        const range = max - min || 1;
+
+        // Draw grid lines
+        ctx.strokeStyle = '#003300';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+            const y = (height / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+
+        // Draw line chart
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        const pointSpacing = width / (data.length - 1);
+
+        data.forEach((value, index) => {
+            const x = index * pointSpacing;
+            const y = height - ((value - min) / range) * height * 0.9 - height * 0.05;
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+
+        // Draw points
+        ctx.fillStyle = color;
+        data.forEach((value, index) => {
+            const x = index * pointSpacing;
+            const y = height - ((value - min) / range) * height * 0.9 - height * 0.05;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Draw labels
+        ctx.fillStyle = '#44ff44';
+        ctx.font = '10px monospace';
+        ctx.fillText(`Max: $${Math.floor(max)}`, 5, 12);
+        ctx.fillText(`Min: $${Math.floor(min)}`, 5, height - 5);
+        ctx.fillText(label, width - ctx.measureText(label).width - 5, 12);
     }
 }
 

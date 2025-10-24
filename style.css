@@ -956,6 +956,111 @@ button.active {
     font-size: 1.1rem;
 }
 
+.loan-officer-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-info);
+    font-size: 0.9rem;
+}
+
+/* Statistics Panel */
+.statistics-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.statistics-toggle button {
+    background: var(--btn-bg);
+    color: var(--text-primary);
+    border: 2px solid var(--text-primary);
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.statistics-toggle button:hover {
+    background: var(--btn-hover);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.statistics-toggle button.active {
+    background: var(--text-primary);
+    color: var(--primary-bg);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.7);
+}
+
+.statistics-panel {
+    grid-column: 1 / -1;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.chart-wrapper {
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    padding: 15px;
+}
+
+.chart-wrapper h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.chart-wrapper canvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .game-grid {
