@@ -333,6 +333,42 @@ header h1 {
     flex: 1;
 }
 
+.speed-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.speed-controls label {
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.speed-controls .speed-btn {
+    flex: 1;
+    padding: 8px;
+}
+
+.speed-controls .speed-btn.active {
+    background: var(--btn-hover);
+    border-color: var(--text-success);
+    color: var(--text-success);
+}
+
+.auto-approve-control {
+    margin-bottom: 15px;
+}
+
+.auto-approve-control button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+}
+
 .game-date {
     background: var(--secondary-bg);
     padding: 10px;
@@ -543,6 +579,15 @@ button.active {
 
     .time-controls {
         flex-direction: column;
+    }
+
+    .speed-controls {
+        flex-wrap: wrap;
+    }
+
+    .speed-controls label {
+        width: 100%;
+        margin-bottom: 5px;
     }
 
     .save-controls {

@@ -114,8 +114,17 @@
             <div class="panel controls-panel">
                 <h2>⏱️ Game Controls</h2>
                 <div class="time-controls">
-                    <button onclick="game.advanceTime()">Advance 1 Month</button>
-                    <button onclick="game.toggleAutoPause()" id="autoBtn">Auto: OFF</button>
+                    <button onclick="game.toggleAutoPause()" id="autoBtn" class="active">Pause</button>
+                    <button onclick="game.advanceTime()">⏩ Skip Month</button>
+                </div>
+                <div class="speed-controls">
+                    <label>Speed:</label>
+                    <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
+                    <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
+                    <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
+                </div>
+                <div class="auto-approve-control">
+                    <button onclick="game.toggleAutoApprove()" id="autoApproveBtn" class="active">Auto-Approve: ON</button>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>

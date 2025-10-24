@@ -16,6 +16,7 @@ class BankGame {
         this.activeAccounts = 0;
         this.customerTrust = 100;
         this.customerQueue = [];
+        this.autoApproveDeposits = true; // Auto-approve deposits by default
 
         // Time and Era
         this.currentYear = 1920;
@@ -23,8 +24,9 @@ class BankGame {
         this.monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                           'July', 'August', 'September', 'October', 'November', 'December'];
         this.era = this.getEra();
-        this.autoAdvance = false;
+        this.autoAdvance = true; // Start with auto-advance ON
         this.autoInterval = null;
+        this.timeSpeed = 1500; // milliseconds between months
 
         // Technology
         this.technologies = {
@@ -56,8 +58,8 @@ class BankGame {
     init() {
         this.updateDisplay();
         this.renderTechTree();
-        this.scheduleCustomer();
         this.checkAutoSave();
+        this.startAutoAdvance(); // Start time progression automatically
     }
 
     // Save/Load System
@@ -268,6 +270,12 @@ class BankGame {
             this.saveGame();
         }
 
+        // Generate 2-4 customers each month
+        const customerCount = Math.floor(Math.random() * 3) + 2;
+        for (let i = 0; i < customerCount; i++) {
+            this.generateCustomer();
+        }
+
         // Process monthly events
         this.processInvestments();
         this.processCustomerEvents();
@@ -276,29 +284,58 @@ class BankGame {
         this.updateDisplay();
     }
 
+    startAutoAdvance() {
+        if (this.autoAdvance && !this.autoInterval) {
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+            const btn = document.getElementById('autoBtn');
+            if (btn) {
+                btn.textContent = 'Pause';
+                btn.classList.add('active');
+            }
+        }
+    }
+
     toggleAutoPause() {
         this.autoAdvance = !this.autoAdvance;
         const btn = document.getElementById('autoBtn');
 
         if (this.autoAdvance) {
-            btn.textContent = 'Auto: ON';
+            btn.textContent = 'Pause';
             btn.classList.add('active');
-            this.autoInterval = setInterval(() => this.advanceTime(), 2000);
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
         } else {
-            btn.textContent = 'Auto: OFF';
+            btn.textContent = 'Play';
             btn.classList.remove('active');
             clearInterval(this.autoInterval);
+            this.autoInterval = null;
         }
     }
 
-    // Customer Management
-    scheduleCustomer() {
-        const delay = Math.random() * 3000 + 2000; // 2-5 seconds
-        setTimeout(() => {
-            this.generateCustomer();
-            this.scheduleCustomer();
-        }, delay);
+    toggleAutoApprove() {
+        this.autoApproveDeposits = !this.autoApproveDeposits;
+        const btn = document.getElementById('autoApproveBtn');
+        if (btn) {
+            btn.textContent = this.autoApproveDeposits ? 'Auto-Approve: ON' : 'Auto-Approve: OFF';
+            btn.classList.toggle('active', this.autoApproveDeposits);
+        }
+        this.addEvent(`Auto-approve deposits: ${this.autoApproveDeposits ? 'ON' : 'OFF'}`, 'info');
     }
+
+    changeSpeed(speed) {
+        this.timeSpeed = speed;
+        if (this.autoInterval) {
+            clearInterval(this.autoInterval);
+            this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+        }
+
+        // Update button states
+        document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        this.addEvent(`Speed changed to ${speed === 500 ? 'Fast' : speed === 1500 ? 'Normal' : 'Slow'}`, 'info');
+    }
+
+    // Customer Management
 
     generateCustomer() {
         const types = ['deposit', 'deposit', 'deposit', 'withdrawal']; // More deposits than withdrawals
@@ -307,6 +344,14 @@ class BankGame {
         let amount;
         if (type === 'deposit') {
             amount = Math.floor(Math.random() * 500 + 100);
+
+            // Auto-approve deposits if setting is on
+            if (this.autoApproveDeposits) {
+                this.cashReserves += amount;
+                this.customerDeposits += amount;
+                this.activeAccounts++;
+                return; // Don't display, just process
+            }
         } else {
             // Can only withdraw if there are deposits
             if (this.customerDeposits <= 0) return;
@@ -316,7 +361,7 @@ class BankGame {
         const customer = {
             type: type,
             amount: amount,
-            id: Date.now()
+            id: Date.now() + Math.random() // Ensure unique IDs
         };
 
         this.customerQueue.push(customer);
@@ -350,13 +395,13 @@ class BankGame {
 
         queueDiv.appendChild(customerDiv);
 
-        // Auto-remove after 15 seconds
+        // Auto-deny after 8 seconds (faster pace now)
         setTimeout(() => {
             const elem = document.getElementById(`customer-${customer.id}`);
             if (elem) {
                 this.handleCustomer(customer.id, false);
             }
-        }, 15000);
+        }, 8000);
     }
 
     handleCustomer(customerId, approve) {
