@@ -25,6 +25,16 @@ class BankGame {
         this.totalLoanDefaults = 0;
         this.loanIdCounter = 0;
 
+        // Staff Management
+        this.staff = {
+            tellers: 0,     // Handle more customer transactions
+            guards: 0,      // Increase security
+            managers: 0,    // Reduce operating costs
+            loanOfficers: 0 // Increase loan capacity
+        };
+        this.bankLevel = 1; // Bank size/upgrade level
+        this.maxStaff = { tellers: 2, guards: 1, managers: 0, loanOfficers: 0 }; // Max staff at current level
+
         // Time and Era
         this.currentYear = 1920;
         this.currentMonth = 1;
@@ -327,6 +337,7 @@ class BankGame {
         this.processInvestments();
         this.processCustomerEvents();
         this.processThiefEvents();
+        this.processWages();
 
         // Check objectives
         this.checkObjectives();
@@ -690,6 +701,182 @@ class BankGame {
         });
     }
 
+    // Staff Management System
+    getStaffWages() {
+        const wages = {
+            tellers: 50,      // $50/month per teller
+            guards: 80,       // $80/month per guard
+            managers: 120,    // $120/month per manager
+            loanOfficers: 100 // $100/month per loan officer
+        };
+
+        let totalWages = 0;
+        for (let role in this.staff) {
+            totalWages += this.staff[role] * wages[role];
+        }
+        return totalWages;
+    }
+
+    hireStaff(role) {
+        const wages = {
+            tellers: 50,
+            guards: 80,
+            managers: 120,
+            loanOfficers: 100
+        };
+
+        if (this.staff[role] >= this.maxStaff[role]) {
+            this.addEvent(`Cannot hire more ${role} - upgrade bank first!`, 'warning');
+            return;
+        }
+
+        const wage = wages[role];
+        if (this.cashReserves < wage * 3) { // Require 3 months wages upfront
+            this.addEvent(`Need $${wage * 3} to hire ${role} (3 months wages)`, 'danger');
+            return;
+        }
+
+        this.staff[role]++;
+        this.cashReserves -= wage * 3;
+        this.addEvent(`✓ Hired ${role.slice(0, -1)}: +$${wage}/month wage`, 'success');
+        this.updateDisplay();
+    }
+
+    fireStaff(role) {
+        if (this.staff[role] <= 0) {
+            this.addEvent(`No ${role} to fire`, 'warning');
+            return;
+        }
+
+        this.staff[role]--;
+        this.customerTrust = Math.max(0, this.customerTrust - 3); // Firing damages morale
+        this.addEvent(`Fired ${role.slice(0, -1)} - trust decreased`, 'warning');
+        this.updateDisplay();
+    }
+
+    upgradeBank() {
+        const upgradeCosts = [0, 2000, 5000, 10000, 20000, 40000]; // Costs for levels 1-6
+        const nextLevel = this.bankLevel + 1;
+
+        if (nextLevel > 5) {
+            this.addEvent(`Bank is already at maximum level!`, 'warning');
+            return;
+        }
+
+        const cost = upgradeCosts[nextLevel];
+        if (this.cashReserves < cost) {
+            this.addEvent(`Need $${cost} to upgrade to Level ${nextLevel}`, 'danger');
+            return;
+        }
+
+        this.cashReserves -= cost;
+        this.bankLevel = nextLevel;
+
+        // Increase staff capacity
+        this.maxStaff = {
+            tellers: 2 + (nextLevel - 1) * 2,      // 2, 4, 6, 8, 10
+            guards: 1 + Math.floor((nextLevel - 1) / 2), // 1, 1, 2, 2, 3
+            managers: Math.max(0, nextLevel - 2),  // 0, 0, 1, 2, 3
+            loanOfficers: Math.max(0, nextLevel - 2) // 0, 0, 1, 2, 3
+        };
+
+        this.addEvent(`🏛️ Bank upgraded to Level ${nextLevel}! Staff capacity increased`, 'success');
+        this.updateDisplay();
+    }
+
+    processWages() {
+        const wages = this.getStaffWages();
+        if (wages > 0) {
+            if (this.cashReserves >= wages) {
+                this.cashReserves -= wages;
+                if (wages > 100) { // Only log if significant
+                    this.addEvent(`Paid staff wages: -$${wages}`, 'info');
+                }
+            } else {
+                // Can't pay wages! Staff quit and trust drops
+                const shortage = wages - this.cashReserves;
+                this.cashReserves = 0;
+                this.customerTrust = Math.max(0, this.customerTrust - 15);
+
+                // Some staff quit
+                if (this.staff.loanOfficers > 0) this.staff.loanOfficers = Math.max(0, this.staff.loanOfficers - 1);
+                else if (this.staff.managers > 0) this.staff.managers = Math.max(0, this.staff.managers - 1);
+                else if (this.staff.tellers > 0) this.staff.tellers = Math.max(0, this.staff.tellers - 1);
+
+                this.addEvent(`💥 WAGE CRISIS: Couldn't pay $${shortage}! Staff quit, trust plummeted!`, 'danger');
+            }
+        }
+    }
+
+    getStaffBonuses() {
+        return {
+            customerBonus: this.staff.tellers * 0.5, // +0.5 customers per teller
+            securityBonus: this.staff.guards * 25,   // +25 security per guard
+            costReduction: this.staff.managers * 0.05, // -5% costs per manager
+            loanCapacity: this.staff.loanOfficers * 2  // +2 max loans per officer
+        };
+    }
+
+    updateStaffDisplay() {
+        const container = document.getElementById('staffList');
+        if (!container) return;
+
+        const wages = { tellers: 50, guards: 80, managers: 120, loanOfficers: 100 };
+        const names = {
+            tellers: 'Tellers',
+            guards: 'Security Guards',
+            managers: 'Managers',
+            loanOfficers: 'Loan Officers'
+        };
+
+        container.innerHTML = '';
+
+        Object.keys(this.staff).forEach(role => {
+            const div = document.createElement('div');
+            div.className = 'staff-item';
+
+            const current = this.staff[role];
+            const max = this.maxStaff[role];
+            const wage = wages[role];
+
+            div.innerHTML = `
+                <div class="staff-header">
+                    <span class="staff-name">${names[role]}</span>
+                    <span class="staff-count">${current}/${max}</span>
+                </div>
+                <div class="staff-info">
+                    Wage: $${wage}/month each | Total: $${wage * current}/month
+                </div>
+                <div class="staff-actions">
+                    <button onclick="game.hireStaff('${role}')" ${current >= max ? 'disabled' : ''}>
+                        Hire ($${wage * 3})
+                    </button>
+                    <button onclick="game.fireStaff('${role}')" ${current <= 0 ? 'disabled' : ''} class="fire-btn">
+                        Fire
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(div);
+        });
+
+        // Add bank upgrade button
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.className = 'bank-upgrade';
+        const nextLevel = this.bankLevel + 1;
+        const costs = [0, 2000, 5000, 10000, 20000, 40000];
+        const cost = costs[nextLevel] || 0;
+
+        upgradeDiv.innerHTML = `
+            <h3>Bank Level: ${this.bankLevel}/5</h3>
+            <button onclick="game.upgradeBank()" ${nextLevel > 5 ? 'disabled' : ''}>
+                ${nextLevel > 5 ? 'MAX LEVEL' : `Upgrade Bank ($${cost})`}
+            </button>
+        `;
+
+        container.appendChild(upgradeDiv);
+    }
+
     // Investment Management
     invest(type) {
         const inputId = type + 'Amount';
@@ -870,6 +1057,9 @@ class BankGame {
         this.technologies.security.forEach(tech => {
             protection += tech.level * tech.protection;
         });
+        // Add guard bonuses
+        const staffBonuses = this.getStaffBonuses();
+        protection += staffBonuses.securityBonus;
         return protection;
     }
 
@@ -974,6 +1164,15 @@ class BankGame {
 
         // Update loan display
         this.updateLoanDisplay();
+
+        // Update staff display
+        this.updateStaffDisplay();
+
+        // Update total wages display
+        const wagesElem = document.getElementById('totalWages');
+        if (wagesElem) {
+            wagesElem.textContent = this.getStaffWages();
+        }
     }
 
     // Objectives System
@@ -1074,6 +1273,9 @@ class BankGame {
         this.technologies.customer.forEach(tech => {
             bonus += tech.level * tech.benefit;
         });
+        // Add staff bonuses
+        const staffBonuses = this.getStaffBonuses();
+        bonus += staffBonuses.customerBonus;
         return bonus;
     }
 
