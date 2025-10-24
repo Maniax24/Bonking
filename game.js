@@ -320,14 +320,11 @@ class BankGame {
     }
 
     init() {
-        console.log('[DEBUG] Game init() called');
         this.unlockProducts(); // Check for new products
         this.updateDisplay();
         this.renderTechTree();
         this.checkAutoSave();
-        console.log('[DEBUG] About to call startAutoAdvance()');
         this.startAutoAdvance(); // Start time progression automatically
-        console.log('[DEBUG] init() complete');
     }
 
     // Competitor Banks System
@@ -355,8 +352,15 @@ class BankGame {
         const totalMarket = this.customerDeposits + this.competitors.reduce((sum, comp) => sum + comp.deposits, 0);
         if (totalMarket > 0) {
             this.marketShare = (this.customerDeposits / totalMarket) * 100;
+            // Calculate each competitor's market share too
+            this.competitors.forEach(comp => {
+                comp.marketShare = (comp.deposits / totalMarket) * 100;
+            });
         } else {
             this.marketShare = 100;
+            this.competitors.forEach(comp => {
+                comp.marketShare = 0;
+            });
         }
     }
 
@@ -708,15 +712,13 @@ class BankGame {
 
     // Time Management
     advanceTime() {
-        try {
-            console.log(`[DEBUG] advanceTime called - Day ${this.currentDay}, Auto: ${this.autoAdvance}, Interval: ${this.autoInterval !== null}`);
-            this.currentDay++;
+        this.currentDay++;
 
-            // Reset teller capacity for new day
-            this.dailyTellerUsed = 0;
-            this.dailyTellerCapacity = this.staff.tellers * 10; // Each teller can serve 10 customers/day
+        // Reset teller capacity for new day
+        this.dailyTellerUsed = 0;
+        this.dailyTellerCapacity = this.staff.tellers * 10; // Each teller can serve 10 customers/day
 
-            if (this.currentDay > this.daysInMonth) {
+        if (this.currentDay > this.daysInMonth) {
             this.currentDay = 1;
             this.currentMonth++;
 
@@ -774,15 +776,9 @@ class BankGame {
         this.dayProgress = 0;
 
         this.updateDisplay();
-        console.log(`[DEBUG] advanceTime completed - Now day ${this.currentDay}`);
-        } catch (error) {
-            console.error('[ERROR] advanceTime failed:', error);
-            console.error('[ERROR] Stack trace:', error.stack);
-        }
     }
 
     startAutoAdvance() {
-        console.log(`[DEBUG] startAutoAdvance - autoAdvance: ${this.autoAdvance}, autoInterval exists: ${this.autoInterval !== null}, timeSpeed: ${this.timeSpeed}`);
         if (this.autoAdvance && !this.autoInterval) {
             this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
             this.startProgressBar();
@@ -791,9 +787,6 @@ class BankGame {
                 btn.textContent = '⏸️ Auto: ON';
                 btn.classList.add('active');
             }
-            console.log('[DEBUG] Auto-advance started successfully');
-        } else {
-            console.log(`[DEBUG] Auto-advance NOT started - autoAdvance: ${this.autoAdvance}, interval exists: ${this.autoInterval !== null}`);
         }
     }
 
