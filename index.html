@@ -47,7 +47,7 @@
             <div class="panel customers-panel">
                 <h2>👥 Customers</h2>
                 <div id="customerQueue">
-                    <p class="hint">Customers will arrive seeking deposits and withdrawals...</p>
+                    <p class="hint">Only large or risky withdrawals require approval. Small transactions are auto-processed.</p>
                 </div>
                 <div class="customer-stats">
                     <div>Active Accounts: <span id="activeAccounts">0</span></div>
@@ -152,9 +152,6 @@
                     <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
                     <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
                     <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
-                </div>
-                <div class="auto-approve-control">
-                    <button onclick="game.toggleAutoApprove()" id="autoApproveBtn" class="active">Auto-Approve: ON</button>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>
