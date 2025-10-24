@@ -232,6 +232,15 @@ class BankGame {
         this.lastEventMonth = 0; // Prevent event spam
         this.eventEffects = []; // Active temporary effects
 
+        // Historical Crisis Events (only trigger once)
+        this.historicalCrises = {
+            crash1929: false,
+            bankHoliday1933: false,
+            oilCrisis1973: false,
+            financialCrisis2008: false,
+            covidPandemic2020: false
+        };
+
         // Competitor Banks
         this.competitors = [];
         this.marketShare = 100; // Your % of market
@@ -1447,6 +1456,26 @@ class BankGame {
         };
     }
 
+    calculateWages() {
+        // Alias for getStaffWages() - used by crisis events
+        return this.getStaffWages();
+    }
+
+    findCheapestUpgrade() {
+        let cheapest = null;
+        let lowestCost = Infinity;
+
+        for (let category in this.technologies) {
+            for (let tech of this.technologies[category]) {
+                if (tech.level < tech.maxLevel && tech.cost < lowestCost) {
+                    cheapest = tech;
+                    lowestCost = tech.cost;
+                }
+            }
+        }
+        return cheapest;
+    }
+
     updateStaffDisplay() {
         const container = document.getElementById('staffList');
         if (!container) return;
@@ -1815,6 +1844,9 @@ class BankGame {
 
     // Random Events System
     processRandomEvent() {
+        // Check for historical crises first (these take priority)
+        this.checkHistoricalCrises();
+
         // Don't trigger if we have an active event or triggered one recently
         if (this.activeEvent) return;
         const monthsSinceLastEvent = this.currentYear * 12 + this.currentMonth - this.lastEventMonth;
@@ -1823,6 +1855,46 @@ class BankGame {
         // 15% chance per month for an event
         if (Math.random() < 0.15) {
             this.triggerRandomEvent();
+        }
+    }
+
+    checkHistoricalCrises() {
+        // Check if we're at the right date for a historical crisis
+        if (this.activeEvent) return; // Don't override active events
+
+        // 1929 Stock Market Crash - October 1929
+        if (this.currentYear === 1929 && this.currentMonth === 10 && !this.historicalCrises.crash1929) {
+            this.historicalCrises.crash1929 = true;
+            this.triggerCrisisEvent('crash1929');
+            return;
+        }
+
+        // 1933 Bank Holiday - March 1933
+        if (this.currentYear === 1933 && this.currentMonth === 3 && !this.historicalCrises.bankHoliday1933) {
+            this.historicalCrises.bankHoliday1933 = true;
+            this.triggerCrisisEvent('bankHoliday1933');
+            return;
+        }
+
+        // 1973 Oil Crisis - October 1973
+        if (this.currentYear === 1973 && this.currentMonth === 10 && !this.historicalCrises.oilCrisis1973) {
+            this.historicalCrises.oilCrisis1973 = true;
+            this.triggerCrisisEvent('oilCrisis1973');
+            return;
+        }
+
+        // 2008 Financial Crisis - September 2008
+        if (this.currentYear === 2008 && this.currentMonth === 9 && !this.historicalCrises.financialCrisis2008) {
+            this.historicalCrises.financialCrisis2008 = true;
+            this.triggerCrisisEvent('financialCrisis2008');
+            return;
+        }
+
+        // COVID-19 Pandemic - March 2020
+        if (this.currentYear === 2020 && this.currentMonth === 3 && !this.historicalCrises.covidPandemic2020) {
+            this.historicalCrises.covidPandemic2020 = true;
+            this.triggerCrisisEvent('covidPandemic2020');
+            return;
         }
     }
 
@@ -1835,6 +1907,417 @@ class BankGame {
         this.lastEventMonth = this.currentYear * 12 + this.currentMonth;
 
         this.displayEvent(event);
+    }
+
+    triggerCrisisEvent(crisisId) {
+        const crisisEvents = this.getCrisisEvents();
+        const event = crisisEvents.find(e => e.id === crisisId);
+        if (!event) return;
+
+        this.activeEvent = event;
+        this.lastEventMonth = this.currentYear * 12 + this.currentMonth;
+        this.addEvent(`🚨 MAJOR EVENT: ${event.title}`, 'danger');
+        this.displayEvent(event);
+    }
+
+    getCrisisEvents() {
+        return [
+            // 1929 Stock Market Crash
+            {
+                id: 'crash1929',
+                title: '💥 BLACK TUESDAY - 1929 STOCK MARKET CRASH',
+                description: 'The stock market has collapsed! Panic sweeps the nation as stock values plummet 50%. Customers are rushing to withdraw their deposits. Your stock investments have crashed. This is the worst financial disaster in history.',
+                type: 'crisis',
+                historical: true,
+                choices: [
+                    {
+                        text: 'Sell investments at massive loss to meet withdrawals',
+                        effect: () => {
+                            // Lose 50% of stock investments
+                            const stockLoss = Math.floor(this.investments.stocks * 0.5);
+                            const speculativeLoss = Math.floor(this.investments.speculative * 0.75);
+                            this.investments.stocks = Math.floor(this.investments.stocks * 0.5);
+                            this.investments.speculative = Math.floor(this.investments.speculative * 0.25);
+
+                            // 40% of customers try to withdraw
+                            const withdrawalDemand = Math.floor(this.customerDeposits * 0.4);
+                            const actualWithdrawals = Math.min(withdrawalDemand, this.cashReserves);
+                            this.cashReserves -= actualWithdrawals;
+                            this.customerDeposits -= actualWithdrawals;
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.6);
+
+                            // Trust hit
+                            this.customerTrust = Math.max(20, this.customerTrust - 30);
+
+                            this.trackExpense('marketCrash', stockLoss + speculativeLoss);
+
+                            return `DEVASTATING: Lost $${stockLoss + speculativeLoss} in investments. Paid out $${actualWithdrawals} in withdrawals. Trust: -30. 40% of customers left.`;
+                        }
+                    },
+                    {
+                        text: 'Hold investments & limit withdrawals (risky!)',
+                        effect: () => {
+                            // Keep investments but take smaller loss
+                            const stockLoss = Math.floor(this.investments.stocks * 0.3);
+                            this.investments.stocks = Math.floor(this.investments.stocks * 0.7);
+                            this.investments.speculative = Math.floor(this.investments.speculative * 0.4);
+
+                            // Can only pay limited withdrawals
+                            const withdrawalDemand = Math.floor(this.customerDeposits * 0.4);
+                            const actualWithdrawals = Math.min(withdrawalDemand * 0.5, this.cashReserves);
+                            this.cashReserves -= actualWithdrawals;
+                            this.customerDeposits -= actualWithdrawals;
+
+                            // MASSIVE trust hit for denying withdrawals
+                            this.customerTrust = Math.max(10, this.customerTrust - 50);
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.5);
+
+                            this.trackExpense('marketCrash', stockLoss);
+
+                            return `BANK RUN: Denied half of withdrawals. Lost $${stockLoss}. Trust: -50! 50% of customers left. Reputation severely damaged.`;
+                        }
+                    },
+                    {
+                        text: 'Emergency: Raise deposit rates to keep customers',
+                        effect: () => {
+                            // Moderate investment loss
+                            const stockLoss = Math.floor(this.investments.stocks * 0.4);
+                            this.investments.stocks = Math.floor(this.investments.stocks * 0.6);
+                            this.investments.speculative = Math.floor(this.investments.speculative * 0.5);
+
+                            // Raise rates dramatically
+                            this.depositInterestRate = Math.min(0.15, this.depositInterestRate * 2);
+
+                            // Fewer withdrawals
+                            const withdrawalDemand = Math.floor(this.customerDeposits * 0.25);
+                            const actualWithdrawals = Math.min(withdrawalDemand, this.cashReserves);
+                            this.cashReserves -= actualWithdrawals;
+                            this.customerDeposits -= actualWithdrawals;
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.75);
+
+                            // Medium trust hit
+                            this.customerTrust = Math.max(30, this.customerTrust - 20);
+
+                            this.trackExpense('marketCrash', stockLoss);
+
+                            return `COSTLY SURVIVAL: Lost $${stockLoss} in investments. Doubled deposit rates to ${(this.depositInterestRate * 100).toFixed(2)}%. Paid $${actualWithdrawals}. Trust: -20. 25% of customers left. High ongoing costs!`;
+                        }
+                    }
+                ]
+            },
+
+            // 1933 Bank Holiday
+            {
+                id: 'bankHoliday1933',
+                title: '🏛️ BANK HOLIDAY - Government Shuts Down All Banks',
+                description: 'President Roosevelt has declared a national "Bank Holiday" - ALL banks must close immediately for 1 week while the government inspects them. You cannot operate, earn revenue, or serve customers, but you must still pay expenses.',
+                type: 'crisis',
+                historical: true,
+                choices: [
+                    {
+                        text: 'Comply fully with government orders',
+                        effect: () => {
+                            // Pay 1 month of wages with no revenue
+                            const wages = this.calculateWages();
+                            this.cashReserves -= wages;
+
+                            // Government inspection boosts trust afterward
+                            this.customerTrust = Math.min(100, this.customerTrust + 25);
+
+                            // Eligible for government support
+                            const governmentAid = Math.floor(wages * 1.5);
+                            this.cashReserves += governmentAid;
+
+                            this.trackExpense('bankHoliday', wages);
+
+                            return `COMPLIANT: Paid $${wages} in expenses with no revenue. Government provided $${governmentAid} in aid. Trust +25 for cooperation. Bank passes inspection!`;
+                        }
+                    },
+                    {
+                        text: 'Operate secretly (illegal but profitable)',
+                        effect: () => {
+                            if (Math.random() < 0.6) {
+                                // Caught!
+                                const fine = Math.floor(this.cashReserves * 0.3);
+                                this.cashReserves -= fine;
+                                this.customerTrust = Math.max(0, this.customerTrust - 40);
+
+                                return `CAUGHT: Fined $${fine} for illegal operation! Trust -40. Federal investigation ongoing. Reputation destroyed!`;
+                            } else {
+                                // Got away with it
+                                const secretProfit = Math.floor(this.customerDeposits * 0.02);
+                                this.cashReserves += secretProfit;
+                                this.customerTrust -= 10;
+
+                                return `RISKY SUCCESS: Earned $${secretProfit} during closure. Trust -10 from rumors. Living dangerously!`;
+                            }
+                        }
+                    },
+                    {
+                        text: 'Use closure to restructure operations',
+                        effect: () => {
+                            // Pay wages but improve efficiency
+                            const wages = this.calculateWages();
+                            this.cashReserves -= wages;
+
+                            // Get efficiency boost
+                            const cheapestTech = this.findCheapestUpgrade();
+                            if (cheapestTech) {
+                                cheapestTech.level++;
+                                this.recalculateStats();
+                            }
+
+                            this.customerTrust += 10;
+                            this.trackExpense('bankHoliday', wages);
+
+                            return `STRATEGIC: Paid $${wages} but used time wisely. Upgraded operations. Trust +10. Emerged stronger!`;
+                        }
+                    }
+                ]
+            },
+
+            // 1973 Oil Crisis
+            {
+                id: 'oilCrisis1973',
+                title: '⛽ OIL CRISIS - Energy Prices Skyrocket',
+                description: 'OPEC has imposed an oil embargo! Gas prices quadruple overnight. Inflation spikes to 12%. The economy is in "stagflation" - high inflation + recession. Interest rates must rise dramatically or your bank will hemorrhage money.',
+                type: 'crisis',
+                historical: true,
+                choices: [
+                    {
+                        text: 'Raise ALL interest rates aggressively',
+                        effect: () => {
+                            // Match inflation
+                            this.depositInterestRate = Math.min(0.12, this.depositInterestRate + 0.06);
+                            this.loanBaseRate = Math.min(0.18, this.loanBaseRate + 0.08);
+
+                            // Spike inflation
+                            this.economy.inflation = 0.12;
+
+                            // Keep customers but reduce activity
+                            this.customerTrust = Math.max(40, this.customerTrust - 10);
+
+                            // Operating costs increase
+                            const inflationCost = Math.floor(this.cashReserves * 0.08);
+                            this.cashReserves -= inflationCost;
+
+                            this.trackExpense('oilCrisis', inflationCost);
+
+                            return `INFLATION DEFENSE: Deposit rate now ${(this.depositInterestRate * 100).toFixed(1)}%, Loan rate ${(this.loanBaseRate * 100).toFixed(1)}%. Lost $${inflationCost} to inflation. Trust -10. Staying competitive!`;
+                        }
+                    },
+                    {
+                        text: 'Keep rates low (lose to inflation)',
+                        effect: () => {
+                            // Don't adjust rates
+                            this.economy.inflation = 0.12;
+
+                            // Massive real value loss
+                            const inflationLoss = Math.floor((this.cashReserves + this.customerDeposits) * 0.12);
+                            this.cashReserves -= Math.floor(inflationLoss * 0.6);
+
+                            // Customers flee to competitors
+                            this.customerDeposits = Math.floor(this.customerDeposits * 0.7);
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.7);
+                            this.customerTrust = Math.max(20, this.customerTrust - 35);
+
+                            this.trackExpense('oilCrisis', Math.floor(inflationLoss * 0.6));
+
+                            return `CRUSHED: Lost $${Math.floor(inflationLoss * 0.6)} to inflation! 30% of customers moved to banks with better rates. Trust -35. Money is losing value daily!`;
+                        }
+                    },
+                    {
+                        text: 'Focus on short-term loans with variable rates',
+                        effect: () => {
+                            // Moderate rate increase
+                            this.depositInterestRate = Math.min(0.10, this.depositInterestRate + 0.04);
+                            this.loanBaseRate = Math.min(0.15, this.loanBaseRate + 0.06);
+                            this.economy.inflation = 0.12;
+
+                            // Benefit from higher loan rates
+                            const loanProfit = Math.floor(this.customerDeposits * 0.05);
+                            this.cashReserves += loanProfit;
+
+                            // Smaller customer loss
+                            this.customerDeposits = Math.floor(this.customerDeposits * 0.85);
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.85);
+
+                            this.trackRevenue('oilCrisisLoans', loanProfit);
+
+                            return `ADAPTIVE: Profit from crisis! Earned $${loanProfit} on variable-rate loans. Lost 15% of depositors. Rates at ${(this.depositInterestRate * 100).toFixed(1)}/${(this.loanBaseRate * 100).toFixed(1)}%.`;
+                        }
+                    }
+                ]
+            },
+
+            // 2008 Financial Crisis
+            {
+                id: 'financialCrisis2008',
+                title: '🏚️ 2008 FINANCIAL CRISIS - Housing Market Collapse',
+                description: 'Lehman Brothers has collapsed! The housing bubble has burst. Mortgage-backed securities are worthless. Unemployment is spiking. Loan defaults are at 35% and rising. The government is offering bailouts, but accepting comes with strings attached.',
+                type: 'crisis',
+                historical: true,
+                choices: [
+                    {
+                        text: 'Accept government bailout (TARP funds)',
+                        effect: () => {
+                            // Get huge cash injection
+                            const bailout = Math.floor(this.customerDeposits * 0.5);
+                            this.cashReserves += bailout;
+
+                            // But massive reputation hit
+                            this.customerTrust = Math.max(30, this.customerTrust - 35);
+
+                            // Loan defaults still happen
+                            const defaultedLoans = Math.floor(this.loans.length * 0.35);
+                            for (let i = 0; i < defaultedLoans && this.loans.length > 0; i++) {
+                                const loan = this.loans[this.loans.length - 1];
+                                this.cashReserves -= loan.principalRemaining;
+                                this.trackExpense('housingCrisis', loan.principalRemaining);
+                                this.loans.pop();
+                                this.totalLoanDefaults++;
+                            }
+
+                            return `BAILOUT: Received $${bailout} from government. Trust -35 ("Too Big To Fail"). ${defaultedLoans} loans defaulted. Public outrage! Survived but tainted.`;
+                        }
+                    },
+                    {
+                        text: 'Refuse bailout - handle crisis independently',
+                        effect: () => {
+                            // Heavy loan defaults
+                            const defaultedLoans = Math.floor(this.loans.length * 0.4);
+                            let totalLoss = 0;
+                            for (let i = 0; i < defaultedLoans && this.loans.length > 0; i++) {
+                                const loan = this.loans[this.loans.length - 1];
+                                totalLoss += loan.principalRemaining;
+                                this.loans.pop();
+                                this.totalLoanDefaults++;
+                            }
+                            this.cashReserves -= totalLoss;
+
+                            if (this.cashReserves < 0) {
+                                this.cashReserves = 100; // Near bankruptcy
+                                this.customerTrust = 20;
+                                this.trackExpense('housingCrisis', totalLoss);
+                                return `NEAR DEATH: Lost $${totalLoss} on defaults. Nearly bankrupt! But maintained independence. Rebuilding from ruins.`;
+                            } else {
+                                // Gain respect for independence
+                                this.customerTrust = Math.min(100, this.customerTrust + 20);
+                                this.trackExpense('housingCrisis', totalLoss);
+                                return `INDEPENDENT: Lost $${totalLoss} but stayed solvent! Trust +20 for refusing bailout. Earned respect for resilience!`;
+                            }
+                        }
+                    },
+                    {
+                        text: 'Aggressively liquidate assets & fortify',
+                        effect: () => {
+                            // Sell all investments at discount
+                            const liquidatedFunds = Math.floor((this.investments.bonds + this.investments.stocks + this.investments.speculative) * 0.7);
+                            this.cashReserves += liquidatedFunds;
+                            this.investments.bonds = 0;
+                            this.investments.stocks = 0;
+                            this.investments.speculative = 0;
+
+                            // Moderate loan defaults
+                            const defaultedLoans = Math.floor(this.loans.length * 0.25);
+                            let totalLoss = 0;
+                            for (let i = 0; i < defaultedLoans && this.loans.length > 0; i++) {
+                                const loan = this.loans[this.loans.length - 1];
+                                totalLoss += loan.principalRemaining;
+                                this.loans.pop();
+                                this.totalLoanDefaults++;
+                            }
+                            this.cashReserves -= totalLoss;
+
+                            // Trust from stability
+                            this.customerTrust = Math.min(100, this.customerTrust + 10);
+
+                            this.trackExpense('housingCrisis', totalLoss);
+
+                            return `DEFENSIVE: Liquidated investments for $${liquidatedFunds}. Lost $${totalLoss} on ${defaultedLoans} defaults. Trust +10. Cash-heavy and defensive!`;
+                        }
+                    }
+                ]
+            },
+
+            // COVID-19 Pandemic
+            {
+                id: 'covidPandemic2020',
+                title: '🦠 COVID-19 PANDEMIC - Global Lockdown',
+                description: 'A deadly pandemic has shut down the global economy! Lockdowns are in effect. Physical branches are empty. Unemployment spikes to 15%. However, online banking is surging. Government is offering emergency loans with favorable terms.',
+                type: 'crisis',
+                historical: true,
+                choices: [
+                    {
+                        text: 'Pivot to digital-first banking',
+                        effect: () => {
+                            // Check if online banking tech unlocked
+                            const hasOnlineTech = this.technologies.efficiency.some(t =>
+                                (t.id === 'online' || t.id === 'mobile') && t.level > 0
+                            );
+
+                            if (hasOnlineTech) {
+                                // Huge advantage!
+                                const digitalBonus = Math.floor(this.customerDeposits * 0.15);
+                                this.cashReserves += digitalBonus;
+                                this.activeAccounts = Math.floor(this.activeAccounts * 1.2);
+                                this.customerTrust = Math.min(100, this.customerTrust + 25);
+
+                                this.trackRevenue('covidDigital', digitalBonus);
+
+                                return `DIGITAL SUCCESS: Online banking saves you! Gained $${digitalBonus} and +20% customers. Trust +25. Perfect timing for tech investment!`;
+                            } else {
+                                // Scramble to adapt
+                                const adaptCost = 5000;
+                                this.cashReserves -= adaptCost;
+                                this.activeAccounts = Math.floor(this.activeAccounts * 0.9);
+
+                                this.trackExpense('covidAdapt', adaptCost);
+
+                                return `SCRAMBLING: Spent $${adaptCost} on emergency digital infrastructure. Lost 10% of customers who couldn't adapt. Need online banking tech!`;
+                            }
+                        }
+                    },
+                    {
+                        text: 'Issue PPP loans (government-backed stimulus)',
+                        effect: () => {
+                            // Government backing means no defaults
+                            const pppLoans = Math.floor(this.customerDeposits * 0.3);
+                            this.cashReserves += pppLoans;
+
+                            // Interest from government
+                            const interest = Math.floor(pppLoans * 0.05);
+                            this.cashReserves += interest;
+
+                            // Good PR
+                            this.customerTrust = Math.min(100, this.customerTrust + 15);
+
+                            this.trackRevenue('pppLoans', pppLoans + interest);
+
+                            return `COMMUNITY HERO: Issued $${pppLoans} in PPP loans, earned $${interest} in fees. Trust +15. Helped local businesses survive!`;
+                        }
+                    },
+                    {
+                        text: 'Reduce operations & weather the storm',
+                        effect: () => {
+                            // Cut costs
+                            const layoffs = Math.floor((this.staff.tellers + this.staff.loanOfficers) * 0.3);
+                            this.staff.tellers = Math.floor(this.staff.tellers * 0.7);
+                            this.staff.loanOfficers = Math.floor(this.staff.loanOfficers * 0.7);
+
+                            // Lose customers but save money
+                            this.activeAccounts = Math.floor(this.activeAccounts * 0.75);
+                            this.customerDeposits = Math.floor(this.customerDeposits * 0.75);
+                            this.customerTrust = Math.max(30, this.customerTrust - 20);
+
+                            const savings = layoffs * 50;
+
+                            return `SURVIVAL MODE: Laid off ${layoffs} staff, saved $${savings}/month. Lost 25% of customers. Trust -20. Hibernating until recovery.`;
+                        }
+                    }
+                ]
+            }
+        ];
     }
 
     getAvailableEvents() {
@@ -2586,6 +3069,21 @@ class BankGame {
         this.statistics.currentMonth.netIncome =
             this.statistics.currentMonth.revenue.total -
             this.statistics.currentMonth.expenses.total;
+
+        // Limit history to last 120 months (10 years) - trim oldest if at limit
+        const maxHistory = 120;
+        if (this.statistics.history.monthly.revenue.length >= maxHistory) {
+            this.statistics.history.monthly.revenue.shift();
+            this.statistics.history.monthly.expenses.shift();
+            this.statistics.history.monthly.netIncome.shift();
+            this.statistics.history.monthly.loanInterestIncome.shift();
+            this.statistics.history.monthly.investmentReturns.shift();
+            this.statistics.history.monthly.productRevenue.shift();
+            this.statistics.history.monthly.depositInterestExpense.shift();
+            this.statistics.history.monthly.wageExpense.shift();
+            this.statistics.history.monthly.defaultExpense.shift();
+            this.statistics.history.monthly.timestamps.shift();
+        }
 
         // Record in history
         this.statistics.history.monthly.revenue.push(this.statistics.currentMonth.revenue.total);
