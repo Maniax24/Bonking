@@ -17,6 +17,21 @@ class BankGame {
         this.customerTrust = 100;
         this.customerQueue = [];
 
+        // Customer Segments
+        this.customerSegments = {
+            retail: { count: 0, deposits: 0, satisfaction: 100 },
+            business: { count: 0, deposits: 0, satisfaction: 100 },
+            vip: { count: 0, deposits: 0, satisfaction: 100 }
+        };
+
+        // Interest Rates
+        this.depositInterestRate = 0.02; // 2% annual - what you pay depositors
+        this.loanBaseRate = 0.06; // 6% annual - base rate for loans (specific loans add to this)
+        this.marketRates = {
+            deposit: 0.02, // Market average for deposits
+            loan: 0.06     // Market average for loans
+        };
+
         // Loan System
         this.loans = []; // Active loans
         this.loanQueue = []; // Pending loan requests
@@ -70,7 +85,7 @@ class BankGame {
         this.era = this.getEra();
         this.autoAdvance = true; // Start with auto-advance ON
         this.autoInterval = null;
-        this.timeSpeed = 20000; // milliseconds per day (20s normal, 30s slow, 10s fast)
+        this.timeSpeed = 10000; // milliseconds per day (10s normal, 15s slow, 5s fast)
         this.dayProgress = 0; // Progress towards next day (0-100)
         this.dayProgressInterval = null;
 
@@ -139,6 +154,12 @@ class BankGame {
         };
         this.showStatistics = false;
 
+        // Random Events System
+        this.activeEvent = null; // Currently displayed event
+        this.eventHistory = []; // Past events
+        this.lastEventMonth = 0; // Prevent event spam
+        this.eventEffects = []; // Active temporary effects
+
         // Objectives System
         this.objectives = [
             { id: 'cash_5k', name: 'Reach $5,000 cash', target: 5000, type: 'cash', completed: false, reward: 500 },
@@ -169,7 +190,7 @@ class BankGame {
     // Save/Load System
     saveGame() {
         const saveData = {
-            version: '1.2',
+            version: '2.0',
             timestamp: Date.now(),
             cashReserves: this.cashReserves,
             customerDeposits: this.customerDeposits,
@@ -387,11 +408,14 @@ class BankGame {
             this.recordHistoricalData();
 
             // Process monthly events
+            this.processDepositInterest(); // Pay interest on deposits
             this.processLoans();
             this.processInvestments();
             this.processManagerAutomation(); // Manager automated tasks
             this.processThiefEvents();
             this.processWages();
+            this.updateMarketRates(); // Update competitive rates
+            this.processRandomEvent(); // Trigger random events
             this.checkObjectives();
         }
 
@@ -546,13 +570,31 @@ class BankGame {
         document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
 
-        const speedName = speed === 10000 ? 'Fast' : speed === 20000 ? 'Normal' : 'Slow';
+        const speedName = speed === 5000 ? 'Fast' : speed === 10000 ? 'Normal' : 'Slow';
         this.addEvent(`Speed changed to ${speedName} (${speed/1000}s per day)`, 'info');
     }
 
     // Customer Management
 
     generateCustomer() {
+        // Determine customer segment
+        const segmentRoll = Math.random();
+        let segment;
+        if (segmentRoll < 0.70) {
+            segment = 'retail'; // 70% retail customers
+        } else if (segmentRoll < 0.95) {
+            segment = 'business'; // 25% business customers
+        } else {
+            segment = 'vip'; // 5% VIP customers
+        }
+
+        // Segment affects rates and our own interest rates
+        const rateAdvantage = this.getCustomerAttraction();
+        if (!rateAdvantage && Math.random() < 0.3) {
+            // 30% chance customer goes elsewhere if rates aren't competitive
+            return;
+        }
+
         const types = ['deposit', 'deposit', 'deposit', 'withdrawal']; // More deposits than withdrawals
         const type = types[Math.floor(Math.random() * types.length)];
 
@@ -560,12 +602,21 @@ class BankGame {
         let canAutoApprove = this.dailyTellerUsed < this.dailyTellerCapacity;
 
         if (type === 'deposit') {
-            amount = Math.floor(Math.random() * 500 + 100);
+            // Amount varies by segment
+            if (segment === 'retail') {
+                amount = Math.floor(Math.random() * 500 + 100); // $100-$600
+            } else if (segment === 'business') {
+                amount = Math.floor(Math.random() * 3000 + 1000); // $1000-$4000
+            } else { // vip
+                amount = Math.floor(Math.random() * 10000 + 5000); // $5000-$15000
+            }
 
             // Auto-approve deposits if setting is on AND teller capacity available
             if (this.automation.tellers.autoApproveDeposits && canAutoApprove) {
                 this.cashReserves += amount;
                 this.customerDeposits += amount;
+                this.customerSegments[segment].deposits += amount;
+                this.customerSegments[segment].count++;
                 this.activeAccounts++;
                 this.dailyTellerUsed++;
                 this.statistics.totals.customersServed++;
@@ -575,7 +626,15 @@ class BankGame {
         } else {
             // Can only withdraw if there are deposits
             if (this.customerDeposits <= 0) return;
-            amount = Math.floor(Math.random() * Math.min(300, this.customerDeposits));
+
+            // Withdrawal amount varies by segment
+            if (segment === 'retail') {
+                amount = Math.floor(Math.random() * Math.min(300, this.customerDeposits));
+            } else if (segment === 'business') {
+                amount = Math.floor(Math.random() * Math.min(2000, this.customerDeposits));
+            } else { // vip
+                amount = Math.floor(Math.random() * Math.min(8000, this.customerDeposits));
+            }
 
             // Auto-approve small withdrawals if settings allow AND teller capacity available
             const reserveRatioAfter = ((this.cashReserves - amount) / this.customerDeposits) * 100;
@@ -601,6 +660,7 @@ class BankGame {
         const customer = {
             type: type,
             amount: amount,
+            segment: segment,
             id: Date.now() + Math.random(), // Ensure unique IDs
             reason: !canAutoApprove ? 'No teller capacity' : type === 'deposit' ? 'Manual approval required' : 'Large/risky withdrawal'
         };
@@ -618,14 +678,17 @@ class BankGame {
         }
 
         const customerDiv = document.createElement('div');
-        customerDiv.className = 'customer-request';
+        customerDiv.className = `customer-request segment-${customer.segment}`;
         customerDiv.id = `customer-${customer.id}`;
 
+        const segmentIcons = { retail: '👤', business: '🏢', vip: '⭐' };
+        const segmentLabels = { retail: 'Retail', business: 'Business', vip: 'VIP' };
         const icon = customer.type === 'deposit' ? '💰' : '💵';
         const action = customer.type === 'deposit' ? 'Deposit' : 'Withdraw';
 
         customerDiv.innerHTML = `
             <div class="customer-info">
+                <div class="customer-segment">${segmentIcons[customer.segment]} ${segmentLabels[customer.segment]}</div>
                 <span>${icon} ${action}: $${customer.amount}</span>
                 ${customer.reason ? `<div class="customer-reason">${customer.reason}</div>` : ''}
             </div>
@@ -657,28 +720,33 @@ class BankGame {
             if (customer.type === 'deposit') {
                 this.cashReserves += customer.amount;
                 this.customerDeposits += customer.amount;
+                this.customerSegments[customer.segment].deposits += customer.amount;
+                this.customerSegments[customer.segment].count++;
                 this.activeAccounts++;
                 this.statistics.totals.customersServed++;
                 this.statistics.totals.depositsProcessed++;
-                this.addEvent(`✓ Accepted deposit of $${customer.amount}`, 'success');
+                this.addEvent(`✓ Accepted ${customer.segment} deposit of $${customer.amount}`, 'success');
             } else { // withdrawal
                 if (this.cashReserves >= customer.amount) {
                     this.cashReserves -= customer.amount;
                     this.customerDeposits -= customer.amount;
+                    this.customerSegments[customer.segment].deposits -= customer.amount;
                     this.statistics.totals.customersServed++;
                     this.statistics.totals.withdrawalsProcessed++;
-                    this.addEvent(`✓ Processed withdrawal of $${customer.amount}`, 'success');
+                    this.addEvent(`✓ Processed ${customer.segment} withdrawal of $${customer.amount}`, 'success');
                 } else {
                     this.customerTrust = Math.max(0, this.customerTrust - 10);
+                    this.customerSegments[customer.segment].satisfaction = Math.max(0, this.customerSegments[customer.segment].satisfaction - 15);
                     this.addEvent(`✗ Failed withdrawal! Insufficient reserves. Trust decreased!`, 'danger');
                 }
             }
         } else {
             if (customer.type === 'withdrawal') {
                 this.customerTrust = Math.max(0, this.customerTrust - 5);
+                this.customerSegments[customer.segment].satisfaction = Math.max(0, this.customerSegments[customer.segment].satisfaction - 8);
             }
             this.statistics.totals.customersServed++;
-            this.addEvent(`Denied customer request for $${customer.amount}`, 'warning');
+            this.addEvent(`Denied ${customer.segment} customer request for $${customer.amount}`, 'warning');
         }
 
         this.customerQueue.splice(customerIndex, 1);
@@ -1218,6 +1286,338 @@ class BankGame {
         }
     }
 
+    // Interest Rate Management
+    processDepositInterest() {
+        if (this.customerDeposits > 0) {
+            const monthlyRate = this.depositInterestRate / 12;
+            const interestPayment = this.customerDeposits * monthlyRate;
+
+            if (this.cashReserves >= interestPayment) {
+                this.cashReserves -= interestPayment;
+                this.addEvent(`Paid $${Math.floor(interestPayment)} interest on deposits`, 'info');
+            } else {
+                // Can't pay interest - major trust hit!
+                this.customerTrust = Math.max(0, this.customerTrust - 20);
+                this.addEvent(`💥 CRISIS: Can't pay deposit interest! Trust plummeted!`, 'danger');
+            }
+        }
+    }
+
+    updateMarketRates() {
+        // Market rates evolve with the era
+        const eraRates = {
+            'roaring20s': { deposit: 0.02, loan: 0.06 },
+            'depression': { deposit: 0.01, loan: 0.08 },
+            'wartime': { deposit: 0.015, loan: 0.05 },
+            'postwar': { deposit: 0.025, loan: 0.06 },
+            'modern': { deposit: 0.03, loan: 0.07 },
+            'digital': { deposit: 0.02, loan: 0.05 },
+            'fintech': { deposit: 0.015, loan: 0.04 },
+            'future': { deposit: 0.01, loan: 0.03 }
+        };
+
+        const baseRates = eraRates[this.era.id] || { deposit: 0.02, loan: 0.06 };
+
+        // Add some randomness (±0.5%)
+        this.marketRates.deposit = baseRates.deposit + (Math.random() - 0.5) * 0.005;
+        this.marketRates.loan = baseRates.loan + (Math.random() - 0.5) * 0.005;
+    }
+
+    getCustomerAttraction() {
+        // Returns true if our rates are competitive
+        const depositAdvantage = this.depositInterestRate >= this.marketRates.deposit - 0.005;
+        const loanAdvantage = this.loanBaseRate <= this.marketRates.loan + 0.005;
+        return depositAdvantage && loanAdvantage;
+    }
+
+    updateInterestRate(type, value) {
+        value = parseFloat(value);
+        if (type === 'deposit') {
+            this.depositInterestRate = value;
+        } else if (type === 'loan') {
+            this.loanBaseRate = value;
+        }
+        this.renderInterestRates();
+    }
+
+    renderInterestRates() {
+        // Update UI displays
+        const depositSlider = document.getElementById('depositInterestRate');
+        const loanSlider = document.getElementById('loanInterestRate');
+        const depositDisplay = document.getElementById('depositRateDisplay');
+        const loanDisplay = document.getElementById('loanRateDisplay');
+        const marketDepositDisplay = document.getElementById('marketDepositRate');
+        const marketLoanDisplay = document.getElementById('marketLoanRate');
+
+        if (depositSlider) depositSlider.value = this.depositInterestRate;
+        if (loanSlider) loanSlider.value = this.loanBaseRate;
+        if (depositDisplay) depositDisplay.textContent = `${(this.depositInterestRate * 100).toFixed(2)}%`;
+        if (loanDisplay) loanDisplay.textContent = `${(this.loanBaseRate * 100).toFixed(2)}%`;
+        if (marketDepositDisplay) marketDepositDisplay.textContent = `${(this.marketRates.deposit * 100).toFixed(2)}%`;
+        if (marketLoanDisplay) marketLoanDisplay.textContent = `${(this.marketRates.loan * 100).toFixed(2)}%`;
+    }
+
+    // Random Events System
+    processRandomEvent() {
+        // Don't trigger if we have an active event or triggered one recently
+        if (this.activeEvent) return;
+        const monthsSinceLastEvent = this.currentYear * 12 + this.currentMonth - this.lastEventMonth;
+        if (monthsSinceLastEvent < 6) return; // At least 6 months between events
+
+        // 15% chance per month for an event
+        if (Math.random() < 0.15) {
+            this.triggerRandomEvent();
+        }
+    }
+
+    triggerRandomEvent() {
+        const events = this.getAvailableEvents();
+        if (events.length === 0) return;
+
+        const event = events[Math.floor(Math.random() * events.length)];
+        this.activeEvent = event;
+        this.lastEventMonth = this.currentYear * 12 + this.currentMonth;
+
+        this.displayEvent(event);
+    }
+
+    getAvailableEvents() {
+        // Event pool with era-specific events
+        const allEvents = [
+            // Economic Events
+            {
+                id: 'market_boom',
+                title: '📈 Market Boom!',
+                description: 'The economy is booming! Investment returns are soaring.',
+                type: 'economic',
+                minYear: 1920,
+                choices: [
+                    {
+                        text: 'Invest heavily in the market',
+                        effect: () => {
+                            const investAmount = Math.floor(this.cashReserves * 0.3);
+                            if (investAmount > 0) {
+                                this.cashReserves -= investAmount;
+                                this.investments.stocks += investAmount;
+                                return `Invested $${investAmount} in stocks. Returns doubled for 6 months!`;
+                            }
+                            return 'Not enough cash to invest.';
+                        }
+                    },
+                    {
+                        text: 'Play it safe',
+                        effect: () => {
+                            this.customerTrust = Math.min(100, this.customerTrust + 5);
+                            return 'Customers appreciate your conservative approach. Trust +5';
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'recession',
+                title: '📉 Economic Downturn',
+                description: 'A recession is hitting hard. Customers are nervous.',
+                type: 'economic',
+                minYear: 1920,
+                choices: [
+                    {
+                        text: 'Lower interest rates to attract deposits',
+                        effect: () => {
+                            this.depositInterestRate *= 1.5;
+                            this.customerTrust = Math.min(100, this.customerTrust + 10);
+                            return 'Deposit rate increased. Trust +10, but higher costs!';
+                        }
+                    },
+                    {
+                        text: 'Tighten lending standards',
+                        effect: () => {
+                            this.automation.loanOfficers.autoApproveMediumRisk = false;
+                            this.automation.loanOfficers.autoApproveHighRisk = false;
+                            return 'Stricter lending reduces risk during tough times.';
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'tech_breakthrough',
+                title: '💡 Technology Breakthrough',
+                description: 'A new banking technology is available at a discount!',
+                type: 'opportunity',
+                minYear: 1950,
+                choices: [
+                    {
+                        text: 'Invest in the technology',
+                        effect: () => {
+                            // Find cheapest unmax tech and upgrade it
+                            let upgraded = false;
+                            for (let category in this.technologies) {
+                                for (let tech of this.technologies[category]) {
+                                    if (tech.level < tech.maxLevel) {
+                                        tech.level++;
+                                        upgraded = true;
+                                        this.recalculateStats();
+                                        return `Upgraded ${tech.name} for free!`;
+                                    }
+                                }
+                            }
+                            return upgraded ? 'Technology upgraded!' : 'All tech already maxed!';
+                        }
+                    },
+                    {
+                        text: 'Decline the offer',
+                        effect: () => {
+                            this.cashReserves += 1000;
+                            return 'Received $1000 consultation fee instead.';
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'vip_opportunity',
+                title: '⭐ VIP Client Opportunity',
+                description: 'A wealthy individual wants to bank with you exclusively.',
+                type: 'opportunity',
+                minYear: 1930,
+                choices: [
+                    {
+                        text: 'Accept (requires premium service)',
+                        effect: () => {
+                            if (this.staff.managers >= 1) {
+                                this.customerSegments.vip.count += 3;
+                                this.cashReserves += 20000;
+                                return 'VIP client secured! +$20,000 and 3 VIP customers!';
+                            }
+                            return 'Need at least 1 manager for VIP service!';
+                        }
+                    },
+                    {
+                        text: 'Decline',
+                        effect: () => {
+                            return 'Passed on the opportunity.';
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'regulatory_audit',
+                title: '🏛️ Regulatory Audit',
+                description: 'Government auditors are reviewing your bank operations.',
+                type: 'regulatory',
+                minYear: 1933,
+                choices: [
+                    {
+                        text: 'Full cooperation',
+                        effect: () => {
+                            const cost = Math.floor(this.cashReserves * 0.05);
+                            this.cashReserves -= cost;
+                            this.customerTrust = Math.min(100, this.customerTrust + 15);
+                            return `Audit cost $${cost}, but trust increased significantly!`;
+                        }
+                    },
+                    {
+                        text: 'Minimal compliance',
+                        effect: () => {
+                            if (Math.random() < 0.3) {
+                                const fine = Math.floor(this.cashReserves * 0.15);
+                                this.cashReserves -= fine;
+                                return `Fined $${fine} for non-compliance!`;
+                            }
+                            return 'Passed audit with minimal effort.';
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'cyber_attack',
+                title: '🔒 Cybersecurity Threat',
+                description: 'Hackers are targeting banks in your area!',
+                type: 'crisis',
+                minYear: 2000,
+                choices: [
+                    {
+                        text: 'Emergency security upgrade',
+                        effect: () => {
+                            const cost = 5000;
+                            if (this.cashReserves >= cost) {
+                                this.cashReserves -= cost;
+                                return `Spent $${cost} on security. Attack prevented!`;
+                            }
+                            const loss = Math.floor(this.cashReserves * 0.2);
+                            this.cashReserves -= loss;
+                            return `Couldn't afford security. Lost $${loss} to breach!`;
+                        }
+                    },
+                    {
+                        text: 'Trust existing security',
+                        effect: () => {
+                            if (this.getSecurityProtection() > 150) {
+                                return 'Your security systems held strong!';
+                            }
+                            const loss = Math.floor(this.cashReserves * 0.1);
+                            this.cashReserves -= loss;
+                            this.customerTrust = Math.max(0, this.customerTrust - 10);
+                            return `Security breach! Lost $${loss} and trust decreased.`;
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // Filter events by year and era
+        return allEvents.filter(e => this.currentYear >= e.minYear);
+    }
+
+    handleEventChoice(choiceIndex) {
+        if (!this.activeEvent) return;
+
+        const choice = this.activeEvent.choices[choiceIndex];
+        const result = choice.effect();
+
+        this.eventHistory.push({
+            ...this.activeEvent,
+            choice: choice.text,
+            result: result,
+            date: `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`
+        });
+
+        this.addEvent(`Event: ${this.activeEvent.title} - ${result}`, 'info');
+
+        this.activeEvent = null;
+        this.hideEvent();
+        this.updateDisplay();
+    }
+
+    displayEvent(event) {
+        const modal = document.getElementById('eventModal');
+        const title = document.getElementById('eventTitle');
+        const description = document.getElementById('eventDescription');
+        const choicesDiv = document.getElementById('eventChoices');
+
+        title.textContent = event.title;
+        description.textContent = event.description;
+
+        choicesDiv.innerHTML = '';
+        event.choices.forEach((choice, index) => {
+            const button = document.createElement('button');
+            button.className = 'event-choice-btn';
+            button.textContent = choice.text;
+            button.onclick = () => this.handleEventChoice(index);
+            choicesDiv.appendChild(button);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    hideEvent() {
+        const modal = document.getElementById('eventModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    recalculateStats() {
+        this.securityLevel = this.calculateSecurityLevel();
+        this.profitMultiplier = this.calculateProfitMultiplier();
+    }
+
     // Technology System
     calculateSecurityLevel() {
         let protection = 0;
@@ -1475,6 +1875,17 @@ class BankGame {
         if (wagesElem) {
             wagesElem.textContent = this.getStaffWages();
         }
+
+        // Update customer segments display
+        document.getElementById('retailCount').textContent = this.customerSegments.retail.count;
+        document.getElementById('retailDeposits').textContent = Math.floor(this.customerSegments.retail.deposits);
+        document.getElementById('businessCount').textContent = this.customerSegments.business.count;
+        document.getElementById('businessDeposits').textContent = Math.floor(this.customerSegments.business.deposits);
+        document.getElementById('vipCount').textContent = this.customerSegments.vip.count;
+        document.getElementById('vipDeposits').textContent = Math.floor(this.customerSegments.vip.deposits);
+
+        // Update interest rates display
+        this.renderInterestRates();
     }
 
     // Objectives System

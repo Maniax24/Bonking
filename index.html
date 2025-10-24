@@ -11,7 +11,7 @@
         <header>
             <h1>🏦 BANK TYCOON 🏦</h1>
             <div class="era-display" id="eraDisplay">Era: 1920s - The Roaring Twenties</div>
-            <div class="version-info">v1.2.0 | Updated: December 2024</div>
+            <div class="version-info">v2.0.0 | Updated: December 2024</div>
         </header>
 
         <div class="game-grid">
@@ -57,6 +57,41 @@
                 <div class="customer-stats">
                     <div>Active Accounts: <span id="activeAccounts">0</span></div>
                     <div>Customer Trust: <span id="customerTrust">100%</span></div>
+                </div>
+                <div class="customer-segments">
+                    <h3>Customer Segments</h3>
+                    <div class="segment-stat">
+                        <span>👤 Retail:</span> <span id="retailCount">0</span> customers | $<span id="retailDeposits">0</span>
+                    </div>
+                    <div class="segment-stat">
+                        <span>🏢 Business:</span> <span id="businessCount">0</span> customers | $<span id="businessDeposits">0</span>
+                    </div>
+                    <div class="segment-stat">
+                        <span>⭐ VIP:</span> <span id="vipCount">0</span> customers | $<span id="vipDeposits">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interest Rates Panel -->
+            <div class="panel rates-panel">
+                <h2>💹 Interest Rates</h2>
+                <div class="rates-controls">
+                    <div class="rate-control">
+                        <label>Deposit Rate: <span id="depositRateDisplay">2.00%</span></label>
+                        <input type="range" id="depositInterestRate" min="0" max="0.10" step="0.001" value="0.02"
+                            oninput="game.updateInterestRate('deposit', this.value)">
+                        <div class="rate-hint">Market: <span id="marketDepositRate">2.00%</span></div>
+                    </div>
+                    <div class="rate-control">
+                        <label>Loan Base Rate: <span id="loanRateDisplay">6.00%</span></label>
+                        <input type="range" id="loanInterestRate" min="0.02" max="0.15" step="0.001" value="0.06"
+                            oninput="game.updateInterestRate('loan', this.value)">
+                        <div class="rate-hint">Market: <span id="marketLoanRate">6.00%</span></div>
+                    </div>
+                    <div class="rates-info">
+                        💡 Competitive rates attract more customers!<br>
+                        Higher deposit rates cost you more but increase trust.
+                    </div>
                 </div>
             </div>
 
@@ -160,9 +195,9 @@
                 </div>
                 <div class="speed-controls">
                     <label>Speed:</label>
-                    <button onclick="game.changeSpeed(30000)" class="speed-btn">Slow (30s)</button>
-                    <button onclick="game.changeSpeed(20000)" class="speed-btn active">Normal (20s)</button>
-                    <button onclick="game.changeSpeed(10000)" class="speed-btn">Fast (10s)</button>
+                    <button onclick="game.changeSpeed(15000)" class="speed-btn">Slow (15s)</button>
+                    <button onclick="game.changeSpeed(10000)" class="speed-btn active">Normal (10s)</button>
+                    <button onclick="game.changeSpeed(5000)" class="speed-btn">Fast (5s)</button>
                 </div>
                 <div class="game-date">
                     <strong>Date:</strong> <span id="gameDate">January 1920</span>
@@ -398,6 +433,17 @@
         <!-- Statistics Toggle Button -->
         <div class="statistics-toggle">
             <button id="toggleStatsBtn" onclick="game.toggleStatistics()">📊 Statistics</button>
+        </div>
+    </div>
+
+    <!-- Random Event Modal -->
+    <div id="eventModal" class="event-modal" style="display: none;">
+        <div class="event-modal-content">
+            <h2 id="eventTitle" class="event-title">Event Title</h2>
+            <p id="eventDescription" class="event-description">Event description goes here.</p>
+            <div id="eventChoices" class="event-choices">
+                <!-- Choices will be populated dynamically -->
+            </div>
         </div>
     </div>
 
