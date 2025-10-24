@@ -39,12 +39,20 @@ class BankGame {
         // Time and Era
         this.currentYear = 1920;
         this.currentMonth = 1;
+        this.currentDay = 1;
+        this.daysInMonth = 30;
         this.monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                           'July', 'August', 'September', 'October', 'November', 'December'];
         this.era = this.getEra();
         this.autoAdvance = true; // Start with auto-advance ON
         this.autoInterval = null;
-        this.timeSpeed = 1500; // milliseconds between months
+        this.timeSpeed = 20000; // milliseconds per day (20s normal, 30s slow, 10s fast)
+        this.dayProgress = 0; // Progress towards next day (0-100)
+        this.dayProgressInterval = null;
+
+        // Teller Capacity System
+        this.dailyTellerCapacity = 0; // Set based on staff
+        this.dailyTellerUsed = 0; // Customers served today
 
         // Technology
         this.technologies = {
@@ -306,18 +314,35 @@ class BankGame {
 
     // Time Management
     advanceTime() {
-        this.currentMonth++;
-        if (this.currentMonth > 12) {
-            this.currentMonth = 1;
-            this.currentYear++;
-            this.era = this.getEra();
-            this.renderTechTree(); // Update available tech
-            // Auto-save every year
-            this.saveGame();
+        this.currentDay++;
+
+        // Reset teller capacity for new day
+        this.dailyTellerUsed = 0;
+        this.dailyTellerCapacity = this.staff.tellers * 10; // Each teller can serve 10 customers/day
+
+        if (this.currentDay > this.daysInMonth) {
+            this.currentDay = 1;
+            this.currentMonth++;
+
+            if (this.currentMonth > 12) {
+                this.currentMonth = 1;
+                this.currentYear++;
+                this.era = this.getEra();
+                this.renderTechTree(); // Update available tech
+                // Auto-save every year
+                this.saveGame();
+            }
+
+            // Process monthly events
+            this.processLoans();
+            this.processInvestments();
+            this.processThiefEvents();
+            this.processWages();
+            this.checkObjectives();
         }
 
-        // Generate 2-4 customers each month + customer tech bonuses
-        const baseCustomers = Math.floor(Math.random() * 3) + 2;
+        // Generate 2-6 customers per day + customer tech bonuses
+        const baseCustomers = Math.floor(Math.random() * 5) + 2;
         const bonusCustomers = Math.floor(this.getCustomerBonus());
         const customerCount = baseCustomers + bonusCustomers;
 
@@ -325,23 +350,19 @@ class BankGame {
             this.generateCustomer();
         }
 
-        // Generate loan requests (1-2 per month, 30% chance)
-        if (Math.random() < 0.3) {
+        // Generate loan requests (1-2 per day, 10% chance)
+        if (Math.random() < 0.1) {
             const loanCount = Math.floor(Math.random() * 2) + 1;
             for (let i = 0; i < loanCount; i++) {
                 this.generateLoanRequest();
             }
         }
 
-        // Process monthly events
-        this.processLoans();
-        this.processInvestments();
+        // Daily trust recovery
         this.processCustomerEvents();
-        this.processThiefEvents();
-        this.processWages();
 
-        // Check objectives
-        this.checkObjectives();
+        // Reset day progress
+        this.dayProgress = 0;
 
         this.updateDisplay();
     }
@@ -349,6 +370,7 @@ class BankGame {
     startAutoAdvance() {
         if (this.autoAdvance && !this.autoInterval) {
             this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+            this.startProgressBar();
             const btn = document.getElementById('autoBtn');
             if (btn) {
                 btn.textContent = 'Pause';
@@ -365,11 +387,36 @@ class BankGame {
             btn.textContent = 'Pause';
             btn.classList.add('active');
             this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+            this.startProgressBar();
         } else {
             btn.textContent = 'Play';
             btn.classList.remove('active');
             clearInterval(this.autoInterval);
             this.autoInterval = null;
+            this.stopProgressBar();
+        }
+    }
+
+    startProgressBar() {
+        this.stopProgressBar(); // Clear any existing interval
+        this.dayProgress = 0;
+
+        // Update progress bar 20 times per second for smooth animation
+        this.dayProgressInterval = setInterval(() => {
+            this.dayProgress += (100 / (this.timeSpeed / 50)); // Increment based on time speed
+            if (this.dayProgress > 100) this.dayProgress = 100;
+
+            const progressBar = document.getElementById('dayProgressBar');
+            if (progressBar) {
+                progressBar.style.width = `${this.dayProgress}%`;
+            }
+        }, 50);
+    }
+
+    stopProgressBar() {
+        if (this.dayProgressInterval) {
+            clearInterval(this.dayProgressInterval);
+            this.dayProgressInterval = null;
         }
     }
 
@@ -388,13 +435,15 @@ class BankGame {
         if (this.autoInterval) {
             clearInterval(this.autoInterval);
             this.autoInterval = setInterval(() => this.advanceTime(), this.timeSpeed);
+            this.startProgressBar(); // Restart progress bar with new speed
         }
 
         // Update button states
         document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
 
-        this.addEvent(`Speed changed to ${speed === 500 ? 'Fast' : speed === 1500 ? 'Normal' : 'Slow'}`, 'info');
+        const speedName = speed === 10000 ? 'Fast' : speed === 20000 ? 'Normal' : 'Slow';
+        this.addEvent(`Speed changed to ${speedName} (${speed/1000}s per day)`, 'info');
     }
 
     updateWithdrawalThreshold(value) {
@@ -412,14 +461,17 @@ class BankGame {
         const type = types[Math.floor(Math.random() * types.length)];
 
         let amount;
+        let canAutoApprove = this.dailyTellerUsed < this.dailyTellerCapacity;
+
         if (type === 'deposit') {
             amount = Math.floor(Math.random() * 500 + 100);
 
-            // Auto-approve deposits if setting is on
-            if (this.autoApproveDeposits) {
+            // Auto-approve deposits if setting is on AND teller capacity available
+            if (this.autoApproveDeposits && canAutoApprove) {
                 this.cashReserves += amount;
                 this.customerDeposits += amount;
                 this.activeAccounts++;
+                this.dailyTellerUsed++;
                 return; // Don't display, just process
             }
         } else {
@@ -427,26 +479,30 @@ class BankGame {
             if (this.customerDeposits <= 0) return;
             amount = Math.floor(Math.random() * Math.min(300, this.customerDeposits));
 
-            // Auto-approve small withdrawals if we have plenty of cash
+            // Auto-approve small withdrawals if we have plenty of cash AND teller capacity
             // Only show withdrawal requests if:
             // 1. Amount is larger than threshold OR
-            // 2. Would bring reserves below 30% of deposits
+            // 2. Would bring reserves below 30% of deposits OR
+            // 3. No teller capacity available
             const reserveRatioAfter = ((this.cashReserves - amount) / this.customerDeposits) * 100;
             const isSmallWithdrawal = amount <= this.autoWithdrawalThreshold;
             const hasGoodReserves = reserveRatioAfter >= 30;
 
-            if (isSmallWithdrawal && hasGoodReserves && this.cashReserves >= amount) {
+            if (isSmallWithdrawal && hasGoodReserves && this.cashReserves >= amount && canAutoApprove) {
                 // Auto-approve small, safe withdrawals
                 this.cashReserves -= amount;
                 this.customerDeposits -= amount;
+                this.dailyTellerUsed++;
                 return; // Don't display, just process
             }
         }
 
+        // If we reach here, customer needs manual approval (either risky or no teller capacity)
         const customer = {
             type: type,
             amount: amount,
-            id: Date.now() + Math.random() // Ensure unique IDs
+            id: Date.now() + Math.random(), // Ensure unique IDs
+            reason: !canAutoApprove ? 'No teller capacity' : type === 'deposit' ? 'Manual approval required' : 'Large/risky withdrawal'
         };
 
         this.customerQueue.push(customer);
@@ -471,6 +527,7 @@ class BankGame {
         customerDiv.innerHTML = `
             <div class="customer-info">
                 <span>${icon} ${action}: $${customer.amount}</span>
+                ${customer.reason ? `<div class="customer-reason">${customer.reason}</div>` : ''}
             </div>
             <div class="customer-actions">
                 <button onclick="game.handleCustomer(${customer.id}, true)" class="approve-btn">✓ Approve</button>
@@ -1169,10 +1226,25 @@ class BankGame {
         document.getElementById('activeAccounts').textContent = this.activeAccounts;
         document.getElementById('customerTrust').textContent = `${Math.floor(this.customerTrust)}%`;
         document.getElementById('gameDate').textContent =
-            `${this.monthNames[this.currentMonth - 1]} ${this.currentYear}`;
+            `${this.monthNames[this.currentMonth - 1]} ${this.currentDay}, ${this.currentYear}`;
         document.getElementById('yearsInBusiness').textContent = this.currentYear - 1920;
         document.getElementById('totalProfit').textContent = `$${Math.floor(this.totalProfit)}`;
         document.getElementById('eraDisplay').textContent = `Era: ${this.era.name}`;
+
+        // Update teller capacity display
+        const tellerCapElem = document.getElementById('tellerCapacity');
+        if (tellerCapElem) {
+            tellerCapElem.textContent = `${this.dailyTellerUsed}/${this.dailyTellerCapacity}`;
+            // Color code based on usage
+            const usagePercent = this.dailyTellerCapacity > 0 ? (this.dailyTellerUsed / this.dailyTellerCapacity) * 100 : 0;
+            if (usagePercent >= 90) {
+                tellerCapElem.style.color = '#ff4444';
+            } else if (usagePercent >= 70) {
+                tellerCapElem.style.color = '#ffaa00';
+            } else {
+                tellerCapElem.style.color = '#44ff44';
+            }
+        }
 
         // Update portfolio display
         const portfolio = [];

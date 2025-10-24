@@ -42,6 +42,10 @@
                     <span>Security Level:</span>
                     <span id="securityLevel">Basic</span>
                 </div>
+                <div class="stat-row">
+                    <span>Teller Capacity:</span>
+                    <span id="tellerCapacity">0/0</span>
+                </div>
             </div>
 
             <!-- Customers Panel -->
@@ -144,15 +148,21 @@
             <!-- Controls Panel -->
             <div class="panel controls-panel">
                 <h2>⏱️ Game Controls</h2>
+                <div class="day-progress-container">
+                    <div class="day-progress-label">Day Progress</div>
+                    <div class="day-progress-bar-container">
+                        <div id="dayProgressBar" class="day-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
                 <div class="time-controls">
                     <button onclick="game.toggleAutoPause()" id="autoBtn" class="active">Pause</button>
-                    <button onclick="game.advanceTime()">⏩ Skip Month</button>
+                    <button onclick="game.advanceTime()">⏩ Skip Day</button>
                 </div>
                 <div class="speed-controls">
                     <label>Speed:</label>
-                    <button onclick="game.changeSpeed(2500)" class="speed-btn">Slow</button>
-                    <button onclick="game.changeSpeed(1500)" class="speed-btn active">Normal</button>
-                    <button onclick="game.changeSpeed(500)" class="speed-btn">Fast</button>
+                    <button onclick="game.changeSpeed(30000)" class="speed-btn">Slow (30s)</button>
+                    <button onclick="game.changeSpeed(20000)" class="speed-btn active">Normal (20s)</button>
+                    <button onclick="game.changeSpeed(10000)" class="speed-btn">Fast (10s)</button>
                 </div>
                 <div class="withdrawal-threshold-control">
                     <label for="withdrawalThreshold">Auto-Approve Withdrawals up to: <span id="withdrawalThresholdDisplay">$200</span></label>
