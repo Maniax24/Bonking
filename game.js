@@ -505,6 +505,7 @@ class BankGame {
     }
 
     init() {
+        this.initializeWithChallenge(); // Load prestige and apply challenge
         this.unlockProducts(); // Check for new products
         this.updateDisplay();
         this.renderTechTree();
@@ -1084,6 +1085,169 @@ class BankGame {
             `;
         } else {
             saveInfo.innerHTML = '<div class="no-save">No saved game</div>';
+        }
+    }
+
+    // Prestige System
+    calculatePrestigePoints() {
+        let points = 0;
+        points += Math.floor(this.totalProfit / 10000);
+        points += (this.currentYear - 1920) * 2;
+        const completedAchievements = this.objectives.filter(o => o.completed).length;
+        points += completedAchievements * 5;
+        if (this.currentYear >= 1930) points += 10;
+        if (this.currentYear >= 1950) points += 20;
+        if (this.currentYear >= 1970) points += 30;
+        if (this.currentYear >= 2000) points += 50;
+        if (this.currentYear >= 2020) points += 75;
+        if (this.historicalCrises.crash1929) points += 25;
+        if (this.historicalCrises.bankHoliday1933) points += 15;
+        if (this.historicalCrises.oilCrisis1973) points += 20;
+        if (this.historicalCrises.financialCrisis2008) points += 30;
+        if (this.historicalCrises.covidPandemic2020) points += 25;
+        const challenge = this.prestige.challenges[this.prestige.currentChallenge];
+        if (challenge) points = Math.floor(points * challenge.pointMultiplier);
+        return points;
+    }
+
+    calculatePrestigeLevel(totalPoints) {
+        return Math.min(10, Math.floor(totalPoints / 100));
+    }
+
+    applyPrestigeBonuses() {
+        const level = this.prestige.level;
+        this.prestige.bonuses.interestBonus = Math.min(5, level * 0.5);
+        this.prestige.bonuses.trustRecovery = Math.min(20, level * 2);
+        this.prestige.bonuses.customerGrowth = Math.min(10, level * 1);
+        this.prestige.bonuses.startingCash = Math.min(5000, level * 500);
+        this.prestige.bonuses.theftReduction = Math.min(10, level * 1);
+
+        for (let challengeId in this.prestige.challenges) {
+            const challenge = this.prestige.challenges[challengeId];
+            if (challenge.requiresPrestige && this.prestige.level >= challenge.requiresPrestige) {
+                challenge.unlocked = true;
+                if (!this.prestige.unlockedChallenges.includes(challengeId)) {
+                    this.prestige.unlockedChallenges.push(challengeId);
+                }
+            }
+        }
+    }
+
+    prestigeRestart(challengeId = 'standard') {
+        const runPoints = this.calculatePrestigePoints();
+        this.prestige.currentRunPoints = runPoints;
+        this.prestige.points += runPoints;
+        this.prestige.totalRuns++;
+
+        if (this.totalProfit > this.prestige.bestRunProfit) {
+            this.prestige.bestRunProfit = this.totalProfit;
+        }
+        if (this.currentYear > this.prestige.bestRunYear) {
+            this.prestige.bestRunYear = this.currentYear;
+        }
+
+        if (!this.prestige.completedChallenges.includes(this.prestige.currentChallenge)) {
+            this.prestige.completedChallenges.push(this.prestige.currentChallenge);
+        }
+
+        const oldLevel = this.prestige.level;
+        this.prestige.level = this.calculatePrestigeLevel(this.prestige.points);
+        this.applyPrestigeBonuses();
+        this.savePrestigeData();
+
+        const levelUp = this.prestige.level > oldLevel;
+        let message = `🌟 PRESTIGE RESTART 🌟\n\n`;
+        message += `Points Earned: ${runPoints}\n`;
+        message += `Total Points: ${this.prestige.points}\n`;
+        message += `Prestige Level: ${this.prestige.level}${levelUp ? ' (LEVEL UP!)' : ''}\n`;
+        message += `Total Runs: ${this.prestige.totalRuns}\n\n`;
+
+        if (levelUp) {
+            message += `NEW BONUSES:\n`;
+            message += `• Interest: +${this.prestige.bonuses.interestBonus.toFixed(1)}%\n`;
+            message += `• Trust Recovery: +${this.prestige.bonuses.trustRecovery.toFixed(0)}%\n`;
+            message += `• Customer Growth: +${this.prestige.bonuses.customerGrowth.toFixed(0)}%\n`;
+            message += `• Starting Cash: +$${this.prestige.bonuses.startingCash}\n`;
+            message += `• Theft Reduction: -${this.prestige.bonuses.theftReduction.toFixed(0)}%\n\n`;
+        }
+
+        const challenge = this.prestige.challenges[challengeId];
+        if (challenge && challenge.unlocked) {
+            message += `Starting: ${challenge.name}\n`;
+            message += `Difficulty: ${'⭐'.repeat(challenge.difficulty)}\n`;
+            alert(message);
+            this.startNewGameWithChallenge(challengeId);
+        } else {
+            alert(message + `\nChallenge "${challengeId}" not unlocked!`);
+        }
+    }
+
+    startNewGameWithChallenge(challengeId) {
+        const challenge = this.prestige.challenges[challengeId];
+        if (!challenge || !challenge.unlocked) return;
+        this.savePrestigeData();
+        localStorage.removeItem('bankTycoonSave');
+        localStorage.setItem('pendingChallenge', challengeId);
+        location.reload();
+    }
+
+    loadPrestigeData() {
+        const prestigeData = localStorage.getItem('bankTycoonPrestige');
+        if (prestigeData) {
+            try {
+                const data = JSON.parse(prestigeData);
+                this.prestige.level = data.level || 0;
+                this.prestige.points = data.points || 0;
+                this.prestige.totalRuns = data.totalRuns || 0;
+                this.prestige.bestRunProfit = data.bestRunProfit || 0;
+                this.prestige.bestRunYear = data.bestRunYear || 1920;
+                this.prestige.unlockedChallenges = data.unlockedChallenges || ['standard'];
+                this.prestige.completedChallenges = data.completedChallenges || [];
+                this.applyPrestigeBonuses();
+                return true;
+            } catch (error) {
+                console.error('Failed to load prestige data:', error);
+            }
+        }
+        return false;
+    }
+
+    savePrestigeData() {
+        const prestigeData = {
+            level: this.prestige.level,
+            points: this.prestige.points,
+            totalRuns: this.prestige.totalRuns,
+            bestRunProfit: this.prestige.bestRunProfit,
+            bestRunYear: this.prestige.bestRunYear,
+            unlockedChallenges: this.prestige.unlockedChallenges,
+            completedChallenges: this.prestige.completedChallenges,
+            timestamp: Date.now()
+        };
+        try {
+            localStorage.setItem('bankTycoonPrestige', JSON.stringify(prestigeData));
+            return true;
+        } catch (error) {
+            console.error('Failed to save prestige data:', error);
+            return false;
+        }
+    }
+
+    initializeWithChallenge() {
+        this.loadPrestigeData();
+        const pendingChallenge = localStorage.getItem('pendingChallenge');
+        if (pendingChallenge) {
+            localStorage.removeItem('pendingChallenge');
+            const challenge = this.prestige.challenges[pendingChallenge];
+            if (challenge && challenge.unlocked) {
+                this.prestige.currentChallenge = pendingChallenge;
+                this.currentYear = challenge.startYear || 1920;
+                this.currentMonth = challenge.startMonth || 1;
+                this.cashReserves = (challenge.startCash || 1000) + this.prestige.bonuses.startingCash;
+                this.activeAccounts = challenge.startAccounts || 0;
+                this.customerDeposits = this.activeAccounts * 100;
+                this.era = this.getEra();
+                this.addEvent(`🌟 Starting ${challenge.name}!`, 'success');
+            }
         }
     }
 
@@ -1669,8 +1833,10 @@ class BankGame {
             loan.totalPaid += loan.monthlyPayment;
             loan.remainingPayments--;
 
-            const interestPortion = (loan.principalRemaining * loan.interestRate / 12);
-            const principalPortion = loan.monthlyPayment - interestPortion;
+            // Apply prestige bonus to interest earned!
+            const prestigeMultiplier = 1 + (this.prestige.bonuses.interestBonus / 100);
+            const interestPortion = (loan.principalRemaining * loan.interestRate / 12) * prestigeMultiplier;
+            const principalPortion = loan.monthlyPayment - (loan.principalRemaining * loan.interestRate / 12);
             loan.principalRemaining -= principalPortion;
 
             this.totalProfit += interestPortion;
@@ -3052,7 +3218,8 @@ class BankGame {
         // Thief attempts get more common over time, but security helps
         const baseChance = 0.05; // 5% per month
         const securityReduction = this.getSecurityProtection() / 500; // Up to 60% reduction
-        const thiefChance = Math.max(0.01, baseChance - securityReduction);
+        const prestigeReduction = this.prestige.bonuses.theftReduction / 100; // Prestige bonus
+        const thiefChance = Math.max(0.01, baseChance - securityReduction - prestigeReduction);
 
         if (Math.random() < thiefChance && monthsSinceLastAttempt > 6) {
             this.handleThiefAttempt();
@@ -3334,6 +3501,8 @@ class BankGame {
                 bonus += tech.level * (tech.benefit / 100); // Convert to multiplier
             }
         });
+        // Add prestige bonus
+        bonus *= (1 + this.prestige.bonuses.trustRecovery / 100);
         return bonus;
     }
 
