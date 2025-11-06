@@ -3606,6 +3606,154 @@ class BankGame {
         }
     }
 
+    togglePrestige() {
+        this.showPrestige = !this.showPrestige;
+        const panel = document.getElementById('prestigePanel');
+        const btn = document.getElementById('togglePrestigeBtn');
+
+        if (this.showPrestige) {
+            panel.style.display = 'block';
+            btn.classList.add('active');
+            this.renderPrestigePanel();
+        } else {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
+
+    renderPrestigePanel() {
+        // Current Run Stats
+        const yearsCompleted = this.currentYear - 1920;
+        const completedAchievements = this.objectives.filter(o => o.completed).length;
+        const totalAchievements = this.objectives.length;
+        const currentRunPoints = this.calculatePrestigePoints();
+
+        document.getElementById('prestigeCurrentYears').textContent = yearsCompleted;
+        document.getElementById('prestigeCurrentProfit').textContent = this.formatMoney(this.totalProfit);
+        document.getElementById('prestigeCurrentAchievements').textContent = `${completedAchievements}/${totalAchievements}`;
+        document.getElementById('prestigeCurrentPoints').textContent = currentRunPoints;
+
+        // Overall Prestige Stats
+        document.getElementById('prestigeLevel').textContent = this.prestige.level;
+        document.getElementById('prestigeTotalPoints').textContent = this.prestige.points;
+        document.getElementById('prestigeTotalRuns').textContent = this.prestige.totalRuns;
+        document.getElementById('prestigeBestYear').textContent = this.prestige.bestRunYear;
+
+        // Active Bonuses
+        document.getElementById('bonusInterest').textContent = `+${this.prestige.bonuses.interestBonus}%`;
+        document.getElementById('bonusTrust').textContent = `+${this.prestige.bonuses.trustRecovery}%`;
+        document.getElementById('bonusGrowth').textContent = `+${this.prestige.bonuses.customerGrowth}%`;
+        document.getElementById('bonusStartCash').textContent = `+${this.prestige.bonuses.startingCash}%`;
+        document.getElementById('bonusTheft').textContent = `-${this.prestige.bonuses.theftReduction}%`;
+
+        // Challenge Modes List
+        this.renderChallengeModes();
+    }
+
+    renderChallengeModes() {
+        const container = document.getElementById('challengeModesList');
+        container.innerHTML = '';
+
+        for (const [id, challenge] of Object.entries(this.prestige.challenges)) {
+            const isUnlocked = this.prestige.unlockedChallenges.includes(id);
+            const isCompleted = this.prestige.completedChallenges.includes(id);
+            const isCurrent = this.prestige.currentChallenge === id;
+
+            const challengeDiv = document.createElement('div');
+            challengeDiv.className = 'challenge-mode-item';
+            if (!isUnlocked) challengeDiv.classList.add('locked');
+            if (isCompleted) challengeDiv.classList.add('completed');
+            if (isCurrent) challengeDiv.classList.add('current');
+
+            let statusIcon = '';
+            if (isCurrent) statusIcon = '▶️ ';
+            else if (isCompleted) statusIcon = '✅ ';
+            else if (!isUnlocked) statusIcon = '🔒 ';
+
+            challengeDiv.innerHTML = `
+                <div class="challenge-header">
+                    <strong>${statusIcon}${challenge.name}</strong>
+                    <span class="challenge-multiplier">${challenge.pointMultiplier}x Points</span>
+                </div>
+                <div class="challenge-description">${challenge.description}</div>
+                <div class="challenge-details">
+                    Start Year: ${challenge.startYear} |
+                    Starting Cash: ${this.formatMoney(challenge.startingCash)} |
+                    ${isUnlocked ? `Unlocks at Level ${challenge.unlockLevel}` : `🔒 Requires Level ${challenge.unlockLevel}`}
+                </div>
+            `;
+
+            container.appendChild(challengeDiv);
+        }
+    }
+
+    showPrestigeConfirmation() {
+        const modal = document.getElementById('prestigeModal');
+
+        // Update modal stats
+        const yearsCompleted = this.currentYear - 1920;
+        const completedAchievements = this.objectives.filter(o => o.completed).length;
+        const pointsToEarn = this.calculatePrestigePoints();
+
+        document.getElementById('modalYears').textContent = yearsCompleted;
+        document.getElementById('modalProfit').textContent = this.formatMoney(this.totalProfit);
+        document.getElementById('modalAchievements').textContent = completedAchievements;
+        document.getElementById('modalPointsEarn').textContent = pointsToEarn;
+
+        // Render challenge selection
+        this.renderChallengeSelection();
+
+        modal.style.display = 'flex';
+    }
+
+    renderChallengeSelection() {
+        const container = document.getElementById('prestigeChallengeSelect');
+        container.innerHTML = '';
+
+        for (const [id, challenge] of Object.entries(this.prestige.challenges)) {
+            const isUnlocked = this.prestige.unlockedChallenges.includes(id);
+
+            if (!isUnlocked) continue; // Only show unlocked challenges
+
+            const option = document.createElement('div');
+            option.className = 'prestige-challenge-option';
+            option.innerHTML = `
+                <label>
+                    <input type="radio" name="prestigeChallenge" value="${id}" ${id === 'standard' ? 'checked' : ''}>
+                    <div class="challenge-option-content">
+                        <strong>${challenge.name}</strong> (${challenge.pointMultiplier}x Points)
+                        <div class="challenge-option-details">
+                            Start: ${challenge.startYear} | Cash: ${this.formatMoney(challenge.startingCash)}
+                        </div>
+                        <div class="challenge-option-desc">${challenge.description}</div>
+                    </div>
+                </label>
+            `;
+            container.appendChild(option);
+        }
+    }
+
+    confirmPrestigeRestart() {
+        // Get selected challenge
+        const selectedChallenge = document.querySelector('input[name="prestigeChallenge"]:checked');
+        if (!selectedChallenge) {
+            alert('Please select a challenge mode!');
+            return;
+        }
+
+        const challengeId = selectedChallenge.value;
+
+        // Close modal
+        document.getElementById('prestigeModal').style.display = 'none';
+
+        // Perform prestige restart
+        this.prestigeRestart(challengeId);
+    }
+
+    cancelPrestigeRestart() {
+        document.getElementById('prestigeModal').style.display = 'none';
+    }
+
     // P&L Tracking Methods
     trackRevenue(type, amount) {
         if (amount <= 0) return;

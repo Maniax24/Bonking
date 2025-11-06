@@ -1770,6 +1770,345 @@ button.active {
     font-size: 0.9rem;
 }
 
+/* Prestige Toggle Button */
+.prestige-toggle {
+    position: fixed;
+    top: 425px;
+    right: 20px;
+    z-index: 999;
+}
+
+.prestige-toggle button {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #6a4c93 0%, #9b59b6 100%);
+    color: #fff;
+    border: 2px solid #a569bd;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.5);
+    transition: all 0.3s ease;
+}
+
+.prestige-toggle button:hover {
+    background: linear-gradient(135deg, #8e44ad 0%, #bb8fce 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(155, 89, 182, 0.8);
+}
+
+.prestige-toggle button.active {
+    background: linear-gradient(135deg, #bb8fce 0%, #d7bde2 100%);
+    box-shadow: 0 0 25px rgba(155, 89, 182, 1);
+}
+
+/* Prestige Panel */
+.prestige-panel {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #2a1a3a 0%, #3a2a4a 100%);
+    border: 3px solid #a569bd;
+    box-shadow: 0 0 20px rgba(155, 89, 182, 0.5);
+}
+
+.prestige-panel h2 {
+    color: #bb8fce;
+    border-bottom: 2px solid #a569bd;
+}
+
+.prestige-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(42, 26, 58, 0.5);
+    border: 2px solid #6a4c93;
+    border-radius: 5px;
+}
+
+.prestige-section h3 {
+    color: #d7bde2;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+.prestige-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.prestige-stat {
+    background: rgba(58, 42, 74, 0.5);
+    padding: 15px;
+    border: 2px solid #a569bd;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.prestige-label {
+    color: #bb8fce;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.prestige-value {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.prestige-highlight {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.prestige-level {
+    color: #ff69b4;
+    text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+}
+
+.prestige-points {
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Prestige Bonuses */
+.prestige-bonuses {
+    display: grid;
+    gap: 10px;
+}
+
+.bonus-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    background: rgba(58, 42, 74, 0.5);
+    border: 2px solid #6a4c93;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.bonus-item:hover {
+    background: rgba(106, 76, 147, 0.3);
+    border-color: #a569bd;
+}
+
+.bonus-name {
+    color: #bb8fce;
+    font-weight: bold;
+}
+
+.bonus-value {
+    color: #44ff44;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Challenge Modes */
+.challenge-modes {
+    display: grid;
+    gap: 15px;
+}
+
+.challenge-mode-item {
+    background: rgba(58, 42, 74, 0.5);
+    border: 2px solid #6a4c93;
+    border-radius: 5px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.challenge-mode-item:hover {
+    background: rgba(106, 76, 147, 0.3);
+    border-color: #a569bd;
+}
+
+.challenge-mode-item.locked {
+    opacity: 0.6;
+    background: rgba(30, 20, 40, 0.5);
+}
+
+.challenge-mode-item.completed {
+    border-color: #44ff44;
+    background: rgba(68, 255, 68, 0.1);
+}
+
+.challenge-mode-item.current {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.challenge-header strong {
+    color: #d7bde2;
+    font-size: 1.1rem;
+}
+
+.challenge-multiplier {
+    color: #ffd700;
+    font-weight: bold;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 4px 10px;
+    border-radius: 3px;
+}
+
+.challenge-description {
+    color: #bb8fce;
+    margin: 10px 0;
+    font-size: 0.95rem;
+}
+
+.challenge-details {
+    color: #a569bd;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Prestige Actions */
+.prestige-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.prestige-restart-btn {
+    background: linear-gradient(135deg, #6a4c93 0%, #9b59b6 100%);
+    color: #fff;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: 3px solid #a569bd;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(155, 89, 182, 0.5);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.prestige-restart-btn:hover {
+    background: linear-gradient(135deg, #8e44ad 0%, #bb8fce 100%);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(155, 89, 182, 0.8);
+}
+
+.prestige-warning {
+    margin-top: 15px;
+    color: #ff4444;
+    font-size: 0.9rem;
+    padding: 10px;
+    background: rgba(255, 68, 68, 0.1);
+    border: 2px solid #ff4444;
+    border-radius: 5px;
+}
+
+/* Prestige Modal */
+.prestige-modal-content {
+    min-width: 600px;
+    max-width: 800px;
+}
+
+.prestige-modal-info {
+    margin: 20px 0;
+}
+
+.prestige-summary {
+    background: rgba(58, 42, 74, 0.5);
+    padding: 15px;
+    border: 2px solid #6a4c93;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.prestige-summary > div {
+    margin: 8px 0;
+    color: #bb8fce;
+    font-size: 1rem;
+}
+
+.prestige-summary span {
+    color: #fff;
+    font-weight: bold;
+}
+
+.prestige-points-earn {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #a569bd;
+    font-size: 1.2rem;
+    color: #ffd700 !important;
+}
+
+.prestige-points-earn span {
+    color: #ffd700 !important;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.prestige-challenge-select {
+    display: grid;
+    gap: 10px;
+    margin: 15px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.prestige-challenge-option {
+    background: rgba(58, 42, 74, 0.5);
+    border: 2px solid #6a4c93;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.prestige-challenge-option:hover {
+    background: rgba(106, 76, 147, 0.3);
+    border-color: #a569bd;
+}
+
+.prestige-challenge-option label {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    cursor: pointer;
+}
+
+.prestige-challenge-option input[type="radio"] {
+    margin-right: 15px;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+.challenge-option-content {
+    flex: 1;
+}
+
+.challenge-option-content strong {
+    color: #d7bde2;
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.challenge-option-details {
+    color: #a569bd;
+    font-size: 0.85rem;
+    margin: 5px 0;
+}
+
+.challenge-option-desc {
+    color: #bb8fce;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .game-grid {

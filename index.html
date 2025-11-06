@@ -683,6 +683,103 @@
                     <p>🎯 Customers are automatically assigned to products based on their segment</p>
                 </div>
             </div>
+
+            <!-- Prestige System Panel -->
+            <div class="panel prestige-panel" id="prestigePanel" style="display: none;">
+                <h2>⭐ Prestige System - New Game+</h2>
+                <p class="panel-hint">Restart with permanent bonuses and unlock challenging new game modes!</p>
+
+                <!-- Current Run Stats -->
+                <div class="prestige-section">
+                    <h3>🎮 Current Run Progress</h3>
+                    <div class="prestige-stats-grid">
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Years Completed</div>
+                            <div class="prestige-value" id="prestigeCurrentYears">0</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Total Profit</div>
+                            <div class="prestige-value" id="prestigeCurrentProfit">$0</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Achievements</div>
+                            <div class="prestige-value" id="prestigeCurrentAchievements">0/20</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Current Run Points</div>
+                            <div class="prestige-value prestige-highlight" id="prestigeCurrentPoints">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Prestige Stats -->
+                <div class="prestige-section">
+                    <h3>🏆 Overall Prestige</h3>
+                    <div class="prestige-stats-grid">
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Prestige Level</div>
+                            <div class="prestige-value prestige-level" id="prestigeLevel">0</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Total Points</div>
+                            <div class="prestige-value prestige-points" id="prestigeTotalPoints">0</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Total Runs</div>
+                            <div class="prestige-value" id="prestigeTotalRuns">0</div>
+                        </div>
+                        <div class="prestige-stat">
+                            <div class="prestige-label">Best Run (Year)</div>
+                            <div class="prestige-value" id="prestigeBestYear">1920</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Bonuses -->
+                <div class="prestige-section">
+                    <h3>💎 Active Permanent Bonuses</h3>
+                    <div class="prestige-bonuses">
+                        <div class="bonus-item">
+                            <span class="bonus-name">💰 Loan Interest Bonus:</span>
+                            <span class="bonus-value" id="bonusInterest">+0%</span>
+                        </div>
+                        <div class="bonus-item">
+                            <span class="bonus-name">🤝 Trust Recovery Speed:</span>
+                            <span class="bonus-value" id="bonusTrust">+0%</span>
+                        </div>
+                        <div class="bonus-item">
+                            <span class="bonus-name">👥 Customer Growth Rate:</span>
+                            <span class="bonus-value" id="bonusGrowth">+0%</span>
+                        </div>
+                        <div class="bonus-item">
+                            <span class="bonus-name">💵 Starting Cash Bonus:</span>
+                            <span class="bonus-value" id="bonusStartCash">+0%</span>
+                        </div>
+                        <div class="bonus-item">
+                            <span class="bonus-name">🔒 Theft Reduction:</span>
+                            <span class="bonus-value" id="bonusTheft">-0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Challenge Modes -->
+                <div class="prestige-section">
+                    <h3>🎯 Challenge Modes</h3>
+                    <div class="challenge-modes" id="challengeModesList">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Prestige Actions -->
+                <div class="prestige-actions">
+                    <button class="prestige-restart-btn" onclick="game.showPrestigeConfirmation()">
+                        ⭐ PRESTIGE RESTART
+                    </button>
+                    <div class="prestige-warning">
+                        ⚠️ Warning: This will restart the game but keep your prestige bonuses and unlock new challenges!
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Automation Settings Toggle Button -->
@@ -714,6 +811,11 @@
         <div class="products-toggle">
             <button id="toggleProductsBtn" onclick="game.toggleProducts()">💳 Products</button>
         </div>
+
+        <!-- Prestige Toggle Button -->
+        <div class="prestige-toggle">
+            <button id="togglePrestigeBtn" onclick="game.togglePrestige()">⭐ Prestige</button>
+        </div>
     </div>
 
     <!-- Random Event Modal -->
@@ -723,6 +825,38 @@
             <p id="eventDescription" class="event-description">Event description goes here.</p>
             <div id="eventChoices" class="event-choices">
                 <!-- Choices will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Prestige Confirmation Modal -->
+    <div id="prestigeModal" class="event-modal" style="display: none;">
+        <div class="event-modal-content prestige-modal-content">
+            <h2 class="event-title">⭐ PRESTIGE RESTART</h2>
+            <div class="prestige-modal-info">
+                <p><strong>Current Run Summary:</strong></p>
+                <div class="prestige-summary">
+                    <div>Years Completed: <span id="modalYears">0</span></div>
+                    <div>Total Profit: <span id="modalProfit">$0</span></div>
+                    <div>Achievements: <span id="modalAchievements">0</span></div>
+                    <div class="prestige-points-earn">Points to Earn: <span id="modalPointsEarn">0</span></div>
+                </div>
+
+                <p style="margin-top: 20px;"><strong>Select Challenge Mode:</strong></p>
+                <div id="prestigeChallengeSelect" class="prestige-challenge-select">
+                    <!-- Challenge options populated dynamically -->
+                </div>
+
+                <p style="margin-top: 20px; color: #ff4444;"><strong>⚠️ Warning:</strong> This will restart your game from the selected challenge's starting year. All current progress will be reset, but you will keep your prestige bonuses and unlock new challenges!</p>
+            </div>
+
+            <div class="event-choices">
+                <button class="choice-btn choice-positive" onclick="game.confirmPrestigeRestart()">
+                    ⭐ Confirm Prestige Restart
+                </button>
+                <button class="choice-btn choice-negative" onclick="game.cancelPrestigeRestart()">
+                    ❌ Cancel
+                </button>
             </div>
         </div>
     </div>
