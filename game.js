@@ -344,6 +344,122 @@ class BankGame {
             }
         };
 
+        // Prestige / New Game+ System
+        this.prestige = {
+            level: 0,                    // Prestige level (lifetime)
+            points: 0,                   // Total prestige points earned
+            currentRunPoints: 0,         // Points earned this run
+            totalRuns: 0,                // Number of runs completed
+            bestRunProfit: 0,            // Best profit in a single run
+            bestRunYear: 1920,           // Furthest year reached
+            unlockedChallenges: ['standard'], // Available starting scenarios
+            completedChallenges: [],     // Challenges beaten
+
+            // Permanent bonuses (small, balanced)
+            bonuses: {
+                interestBonus: 0,        // +0.5% interest per level (max +5%)
+                trustRecovery: 0,        // +2% trust recovery per level (max +20%)
+                customerGrowth: 0,       // +1% customer attraction per level (max +10%)
+                startingCash: 0,         // +$500 starting cash per level (max +$5000)
+                theftReduction: 0        // -1% theft chance per level (max -10%)
+            },
+
+            // Available challenges
+            challenges: {
+                standard: {
+                    name: 'Standard Start',
+                    desc: 'Classic 1920 start with $1,000',
+                    startYear: 1920,
+                    startCash: 1000,
+                    difficulty: 1,
+                    unlocked: true,
+                    pointMultiplier: 1.0
+                },
+                depression: {
+                    name: 'Great Depression',
+                    desc: 'Start in October 1929, right before the crash',
+                    startYear: 1929,
+                    startMonth: 10,
+                    startCash: 5000,
+                    difficulty: 3,
+                    unlocked: false,
+                    requiresPrestige: 1,
+                    pointMultiplier: 1.5
+                },
+                wartime: {
+                    name: 'Post-War Boom',
+                    desc: 'Start in 1950 with established bank',
+                    startYear: 1950,
+                    startCash: 10000,
+                    startAccounts: 50,
+                    difficulty: 2,
+                    unlocked: false,
+                    requiresPrestige: 2,
+                    pointMultiplier: 1.2
+                },
+                stagflation: {
+                    name: 'Stagflation Era',
+                    desc: 'Start in 1973 during oil crisis',
+                    startYear: 1973,
+                    startMonth: 10,
+                    startCash: 25000,
+                    startAccounts: 100,
+                    difficulty: 4,
+                    unlocked: false,
+                    requiresPrestige: 3,
+                    pointMultiplier: 1.8
+                },
+                dotcom: {
+                    name: 'Dot-Com Bubble',
+                    desc: 'Start in 1999, ready for tech boom and bust',
+                    startYear: 1999,
+                    startCash: 50000,
+                    startAccounts: 200,
+                    difficulty: 3,
+                    unlocked: false,
+                    requiresPrestige: 4,
+                    pointMultiplier: 1.6
+                },
+                crisis: {
+                    name: '2008 Financial Crisis',
+                    desc: 'Start in September 2008 as crisis begins',
+                    startYear: 2008,
+                    startMonth: 9,
+                    startCash: 100000,
+                    startAccounts: 500,
+                    difficulty: 5,
+                    unlocked: false,
+                    requiresPrestige: 5,
+                    pointMultiplier: 2.0
+                },
+                pandemic: {
+                    name: 'COVID Pandemic',
+                    desc: 'Start in March 2020 as pandemic hits',
+                    startYear: 2020,
+                    startMonth: 3,
+                    startCash: 150000,
+                    startAccounts: 800,
+                    difficulty: 4,
+                    unlocked: false,
+                    requiresPrestige: 6,
+                    pointMultiplier: 1.8
+                },
+                hardcore: {
+                    name: 'Hardcore Mode',
+                    desc: 'Start in 1920 but all crises are 50% worse',
+                    startYear: 1920,
+                    startCash: 1000,
+                    difficulty: 5,
+                    unlocked: false,
+                    requiresPrestige: 10,
+                    crisisMultiplier: 1.5,
+                    pointMultiplier: 3.0
+                }
+            },
+
+            currentChallenge: 'standard'
+        };
+
         // Objectives & Achievements System
         this.objectives = [
             // Financial Milestones
